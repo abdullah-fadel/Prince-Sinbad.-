@@ -6,7 +6,11 @@
    (G.deathT) so pausing pauses everything.
    ========================================================= */
 
+/* dodge/attack timing (seconds) */
+const ROLL_TIME = .42, ROLL_COOL = .7, SWORD_TIME = .28, SWORD_COOL = .34, ROLL_SPD = 430;
+
 function hurtPlayer(dmg, kx){
+  if (P.rollT > 0) return;                    // i-frames: a well-timed roll dodges everything
   if (P.inv > 0 || P.dead) return;
   P.hp -= dmg; P.inv = 1.5;
   P.vx = (kx || -P.face) * 220; P.vy = -330;
@@ -35,7 +39,22 @@ function updateDeath(dt){
   }
 }
 
-let jHeld = false, fHeld = false;
+let jHeld = false, fHeld = false, swHeld = false, rollHeld = false;
+
+/* instantaneous melee: a short reach in front of the hero, resolved once per swing */
+function meleeStrike(){
+  const reach = 52;
+  const box = {
+    x: P.face > 0 ? P.x + P.w - 10 : P.x - reach + 10,
+    y: P.y + 2, w: reach, h: P.h - 6
+  };
+  const cx = P.x + P.w / 2;
+  for (const e of G.ents)
+    if ((e.t === 'scorp' || e.t === 'bandit') && !e.dead && aabb(box, e)) hitEnemy(e, 1, cx);
+  const b = G.boss;
+  if (b && !b.dead && aabb(box, b)) hitBoss(1);
+  ring(cx + P.face * 26, P.y + P.h / 2, 'rgba(255,250,235,.85)', 30);
+}
 
 function updatePlayer(dt){
   if (P.dead){ P.vy += 2200 * dt; P.y += P.vy * dt; P.anim += dt; return; }
@@ -55,7 +74,21 @@ function updatePlayer(dt){
   /* ---- horizontal movement ---- */
   const acc = P.onG ? PHYS.acc : PHYS.accAir;
   let mx = 0; if (inL()) mx = -1; if (inR()) mx = 1;
-  if (mx){
+
+  /* ---- dodge roll: a quick invulnerable dash (start on the ground) ---- */
+  P.rollCool -= dt;
+  if (inRoll() && !rollHeld && P.rollCool <= 0 && P.rollT <= 0 && P.onG && !P.climb){
+    P.rollT = ROLL_TIME; P.rollCool = ROLL_COOL; P.rollDir = mx || P.face; P.face = P.rollDir;
+    SFX.roll(); puff(P.x + P.w / 2, P.y + P.h, 9, '#d9c9a8', 130, .45);
+  }
+  rollHeld = inRoll();
+
+  if (P.rollT > 0){                          // rolling: locked dash, ignore normal accel/friction
+    P.rollT -= dt;
+    P.vx = P.rollDir * ROLL_SPD * (.4 + .6 * Math.max(0, P.rollT / ROLL_TIME));
+    P.face = P.rollDir;
+    if (Math.random() < .5) puff(P.x + P.w / 2 - P.rollDir * 8, P.y + P.h - 4, 1, 'rgba(217,201,168,.8)', 40, .3);
+  } else if (mx){
     P.vx += mx * acc * dt; P.face = mx;
     P.vx = Math.max(-PHYS.top, Math.min(PHYS.top, P.vx));
   } else {
@@ -144,10 +177,21 @@ function updatePlayer(dt){
     if (P.stepT <= 0){ P.stepT = .22; puff(P.x + P.w / 2 - P.face * 10, P.y + P.h - 2, 1, 'rgba(217,201,168,.9)', 40, .3); }
   }
 
-  /* ---- fire attack ---- */
+  /* ---- sword: permanent melee, no ammo (can't attack mid-roll) ---- */
+  const sp = inSword();
+  P.swordCool -= dt;
+  if (sp && !swHeld && P.swordCool <= 0 && P.rollT <= 0 && !P.climb){
+    P.swordT = SWORD_TIME; P.swordCool = SWORD_COOL;
+    P.state = 'attack'; P.atkT = SWORD_TIME; SFX.slash();
+    meleeStrike();
+  }
+  swHeld = sp;
+  if (P.swordT > 0) P.swordT -= dt;
+
+  /* ---- fire attack (limited ammo, picked up during play) ---- */
   const fp = inF();
   P.cool -= dt;
-  if (fp && !fHeld && P.cool <= 0 && P.fire > 0){
+  if (fp && !fHeld && P.cool <= 0 && P.fire > 0 && P.rollT <= 0 && P.swordT <= 0){
     P.fire--; P.cool = .38; SFX.fire();
     G.fireballs.push({ x:P.x + P.w / 2 + P.face * 20, y:P.y + 22, vx:P.face * 520, vy:0, t:0, r:11 });
     P.state = 'attack'; P.atkT = .25;
@@ -198,7 +242,8 @@ function updatePlayer(dt){
   /* ---- animation state ---- */
   P.inv = Math.max(0, P.inv - dt);
   P.anim += dt * (Math.abs(P.vx) > 20 ? 1.6 : 1);
-  if (P.atkT > 0) P.state = 'attack';
+  if (P.rollT > 0) P.state = 'roll';
+  else if (P.swordT > 0 || P.atkT > 0) P.state = 'attack';
   else if (P.climb) P.state = 'climb';
   else if (!P.onG) P.state = P.vy < 0 ? 'jump' : 'fall';
   else if (Math.abs(P.vx) > 20) P.state = 'run';

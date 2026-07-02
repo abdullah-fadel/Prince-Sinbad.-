@@ -19,7 +19,7 @@ addEventListener('blur', () => {           // window lost focus: release everyth
 });
 
 /* touch buttons */
-const T = { L:false, R:false, J:false, F:false, D:false };
+const T = { L:false, R:false, J:false, F:false, D:false, A:false, Roll:false };
 function bindT(id, k){
   const el = document.getElementById(id);
   const on  = e => { e.preventDefault(); T[k] = true;  el.classList.add('on');    ac(); };
@@ -30,10 +30,13 @@ function bindT(id, k){
   el.addEventListener('contextmenu', e => e.preventDefault());
 }
 bindT('btnL','L'); bindT('btnR','R'); bindT('btnJ','J'); bindT('btnF','F'); bindT('btnD','D');
+bindT('btnA','A'); bindT('btnRoll','Roll');
 
-const inL  = () => keys['ArrowLeft']  || keys['KeyA'] || T.L;
-const inR  = () => keys['ArrowRight'] || keys['KeyD'] || T.R;
-const inJ  = () => keys['Space'] || keys['ArrowUp'] || keys['KeyW'] || T.J;
-const inF  = () => keys['KeyX'] || keys['KeyZ'] || T.F;
-const inUp = () => keys['ArrowUp'] || keys['KeyW'] || T.J;
-const inDn = () => keys['ArrowDown'] || keys['KeyS'] || T.D;
+const inL    = () => keys['ArrowLeft']  || keys['KeyA'] || T.L;
+const inR    = () => keys['ArrowRight'] || keys['KeyD'] || T.R;
+const inJ    = () => keys['Space'] || keys['ArrowUp'] || keys['KeyW'] || T.J;
+const inSword= () => keys['KeyJ'] || keys['KeyX'] || T.A;                 // permanent melee
+const inF    = () => keys['KeyK'] || keys['KeyZ'] || T.F;                 // fireball (limited ammo)
+const inRoll = () => keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyC'] || T.Roll; // dodge roll
+const inUp   = () => keys['ArrowUp'] || keys['KeyW'] || T.J;
+const inDn   = () => keys['ArrowDown'] || keys['KeyS'] || T.D;

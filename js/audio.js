@@ -53,35 +53,65 @@ const SFX = {
   chest: () => { beep(600, .1, 'triangle', .12); setTimeout(() => beep(900, .16, 'triangle', .12), 90); },
   check: () => { beep(520, .12, 'triangle', .11); setTimeout(() => beep(780, .18, 'triangle', .11), 110); },
   boss : () => beep(90, .5, 'sawtooth', .18, -30),
+  slash: () => { beep(880, .10, 'sawtooth', .10, -520); setTimeout(() => beep(1500, .06, 'square', .06, -300), 20); }, // steel swish
+  roll : () => beep(360, .20, 'sine', .09, -220),                                                                      // soft whoosh
   win  : () => { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, .25, 'triangle', .13), i * 140)); }
 };
 
-/* ---- generative ambient music: slow hijaz-scale plucks over a drone ---- */
+/* ---- generative ambient music ----
+   A calm, old-Baghdad mood: slow oud-like plucks and an occasional
+   qanun shimmer wander a D-hijaz maqam over a soft two-note drone,
+   with a gentle hand-drum pulse. Everything is quiet and unhurried. */
 const HIJAZ = [146.83, 155.56, 185.00, 196.00, 220.00, 233.08, 277.18, 293.66]; // D hijaz
-let musicTimer = null, droneOsc = null;
+let musicTimer = null, drones = [];
+
+/* a plucked note that decays like a string (oud): quick attack, long tail */
+function pluck(freq, dur, vol, type = 'triangle'){
+  try{
+    const a = ac(), o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.value = freq;
+    const t0 = a.currentTime;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(musicGain);
+    o.start(t0); o.stop(t0 + dur + 0.05);
+  }catch(e){}
+}
 
 function startMusic(){
   if (musicTimer) return;
   ac();
+  /* two soft sine drones a fifth apart (D2 + A2) for a warm bed */
   try{
-    droneOsc = AC.createOscillator();
-    const dg = AC.createGain();
-    droneOsc.type = 'sine'; droneOsc.frequency.value = 73.42; // D2
-    dg.gain.value = .05;
-    droneOsc.connect(dg); dg.connect(musicGain);
-    droneOsc.start();
+    drones = [];
+    for (const [f, v] of [[73.42, .045], [110.0, .028]]){
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = 'sine'; o.frequency.value = f; g.gain.value = v;
+      o.connect(g); g.connect(musicGain); o.start();
+      drones.push(o);
+    }
   }catch(e){}
-  let step = 0;
+  let step = 0, last = 4;
   musicTimer = setInterval(() => {
     if (G.state !== 'play') return;
     step++;
-    if (step % 2 && Math.random() < .4) return; // sparse, breathing phrasing
-    const n = HIJAZ[Math.floor(Math.random() * HIJAZ.length)];
-    beep(n, 1.4, 'triangle', .045, 0, musicGain);
-    if (Math.random() < .25) setTimeout(() => beep(n * 2, .9, 'sine', .03, 0, musicGain), 180);
-  }, 430);
+    /* soft hand-drum: a low "dum" on the down-beat, lighter "tek" between */
+    if (step % 4 === 0) beep(84, .16, 'sine', .05, -20, musicGain);
+    else if (step % 4 === 2 && Math.random() < .6) beep(150, .09, 'triangle', .03, -40, musicGain);
+
+    if (step % 2 && Math.random() < .45) return;  // breathing, sparse phrasing
+    /* stepwise melodic motion sounds more like a played maqam than random leaps */
+    let idx = last + (Math.random() < .5 ? -1 : 1) * (1 + (Math.random() < .3 ? 1 : 0));
+    idx = Math.max(0, Math.min(HIJAZ.length - 1, idx)); last = idx;
+    const n = HIJAZ[idx];
+    pluck(n, 1.6, .05);
+    /* occasional qanun-like shimmer an octave up */
+    if (Math.random() < .3) setTimeout(() => pluck(n * 2, 1.1, .028, 'sine'), 170);
+  }, 470);
 }
 function stopMusic(){
   if (musicTimer){ clearInterval(musicTimer); musicTimer = null; }
-  if (droneOsc){ try{ droneOsc.stop(); }catch(e){} droneOsc = null; }
+  for (const o of drones){ try{ o.stop(); }catch(e){} }
+  drones = [];
 }

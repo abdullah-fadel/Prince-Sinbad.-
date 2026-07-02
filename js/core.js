@@ -19,7 +19,8 @@ const P = {
   x:0, y:0, w:32, h:58, vx:0, vy:0, onG:false, wasG:false, face:1,
   jumps:0, coyote:0, jbuf:0, cut:false, squash:0, stretch:0,
   hp:3, maxHp:3, inv:0, fire:5, cool:0, anim:0, state:'idle',
-  dead:false, climb:false, winWalk:false, atkT:0, stepT:0, dropDown:false
+  dead:false, climb:false, winWalk:false, atkT:0, stepT:0, dropDown:false,
+  swordT:0, swordCool:0, rollT:0, rollCool:0, rollDir:1
 };
 
 function tileAt(c, r){ if (r < 0 || c < 0 || r >= G.H || c >= G.W) return '#'; return G.grid[r][c]; }
@@ -43,7 +44,7 @@ function loadLevel(i){
   G.grid = L.rows.map(r => r.padEnd(w, ' ').split(''));
   G.H = G.grid.length; G.W = w;
   G.ents = []; G.fireballs = []; G.parts = []; G.motes = [];
-  G.boss = null; G.princess = null; G.cine = 0; G.banner = 2.4;
+  G.boss = null; G.princess = null; G.cine = 0; G.banner = 3.8;
   G.deathT = 0; G.winT = 0; G.fade = 0; G.hitstop = 0; G.shake = 0;
   let spawned = false;
   for (let r = 0; r < G.H; r++) for (let c = 0; c < G.W; c++){
@@ -59,6 +60,7 @@ function loadLevel(i){
   P.x = G.checkpoint.x; P.y = G.checkpoint.y; P.vx = 0; P.vy = 0;
   P.hp = P.maxHp; P.dead = false; P.winWalk = false; P.climb = false;
   P.jumps = 0; P.coyote = 0; P.jbuf = 0; P.inv = 0; P.squash = 0; P.stretch = 0;
+  P.swordT = 0; P.swordCool = 0; P.rollT = 0; P.rollCool = 0;
   P.fire = Math.max(P.fire, 5); G.time = 0;
   camSnap();
   if (L.boss){ G.cine = 2.6; SFX.boss(); }

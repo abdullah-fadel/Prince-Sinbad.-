@@ -76,6 +76,34 @@ function updateBoss(dt){
   }
 }
 
+/* ---------------- shared damage helpers ----------------
+   Used by both the fireball (ranged) and the sword (melee),
+   so a hit looks and scores the same however it lands. */
+function hitEnemy(e, dmg, srcx){
+  if (e.dead) return;
+  e.hp -= dmg; e.hurt = .2;
+  e.x += (Math.sign(e.x - srcx) || 1) * 8;          // knockback away from the attacker
+  if (e.hp <= 0){
+    e.dead = .01;
+    const pts = e.t === 'scorp' ? 200 : 300;
+    G.score += pts; SFX.stomp();
+    ring(e.x + e.w / 2, e.y + e.h / 2, '#ff9a2e', 36);
+    popText(e.x + e.w / 2, e.y - 8, '+' + pts);
+  } else SFX.hit();
+  puff(e.x + e.w / 2, e.y + e.h / 2, 10, '#ff9a2e', 160, .4);
+}
+function hitBoss(dmg){
+  const b = G.boss; if (!b || b.dead) return;
+  b.hp -= dmg; b.hurt = .25; G.hitstop = Math.max(G.hitstop, .05);
+  SFX.hit(); puff(b.x + b.w / 2, b.y + b.h / 2, 14, '#ff9a2e', 180, .5); ring(b.x + b.w / 2, b.y + b.h / 2, '#ffd75e', 30);
+  if (b.hp <= 0){
+    b.dead = .01; G.score += 2000; G.shake = .7;
+    puff(b.x + b.w / 2, b.y + b.h / 2, 40, '#ffd75e', 260, 1);
+    ring(b.x + b.w / 2, b.y + b.h / 2, '#ffd75e', 130);
+    popText(b.x + b.w / 2, b.y - 10, '+2000');
+  }
+}
+
 /* ---------------- fireballs ---------------- */
 function updateFireballs(dt){
   for (let i = G.fireballs.length - 1; i >= 0; i--){
@@ -90,15 +118,7 @@ function updateFireballs(dt){
       if ((e.t === 'scorp' || e.t === 'bandit') && !e.dead &&
           Math.abs(f.x - (e.x + e.w / 2)) < e.w / 2 + f.r &&
           Math.abs(f.y - (e.y + e.h / 2)) < e.h / 2 + f.r){
-        e.hp--; e.hurt = .2; dead = true;
-        e.x += Math.sign(f.vx) * 10; // knockback nudge
-        if (e.hp <= 0){
-          e.dead = .01;
-          const pts = e.t === 'scorp' ? 200 : 300;
-          G.score += pts; SFX.stomp();
-          ring(e.x + e.w / 2, e.y + e.h / 2, '#ff9a2e', 36);
-          popText(e.x + e.w / 2, e.y - 8, '+' + pts);
-        } else SFX.hit();
+        hitEnemy(e, 1, f.x); dead = true;
         puff(f.x, f.y, 10, '#ff9a2e', 160, .4); break;
       }
     }
@@ -106,15 +126,7 @@ function updateFireballs(dt){
     if (b && !b.dead && !dead &&
         Math.abs(f.x - (b.x + b.w / 2)) < b.w / 2 + f.r &&
         Math.abs(f.y - (b.y + b.h / 2)) < b.h / 2 + f.r){
-      b.hp--; b.hurt = .25; dead = true;
-      G.hitstop = Math.max(G.hitstop, .05);
-      SFX.hit(); puff(f.x, f.y, 14, '#ff9a2e', 180, .5); ring(f.x, f.y, '#ffd75e', 30);
-      if (b.hp <= 0){
-        b.dead = .01; G.score += 2000; G.shake = .7;
-        puff(b.x + b.w / 2, b.y + b.h / 2, 40, '#ffd75e', 260, 1);
-        ring(b.x + b.w / 2, b.y + b.h / 2, '#ffd75e', 130);
-        popText(b.x + b.w / 2, b.y - 10, '+2000');
-      }
+      hitBoss(1); dead = true;
     }
     if (dead){
       if (f.t <= 1.6){ puff(f.x, f.y, 8, '#ff9a2e', 140, .35); ring(f.x, f.y, '#ffb03c', 22); }

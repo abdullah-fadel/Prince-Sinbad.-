@@ -28,6 +28,9 @@ canvas{display:block;image-rendering:auto;background:#000;}
 .btn.small{font-size:15px;padding:8px 22px;}
 .stats{font-size:clamp(16px,3vw,22px);margin:14px 0 6px;line-height:2;}
 .best{color:var(--gold);opacity:.8;font-size:15px;margin-top:10px;}
+.story{color:var(--cream);opacity:.9;font-size:clamp(14px,2.4vw,17px);max-width:600px;line-height:1.95;
+  margin:-10px 0 24px;background:rgba(14,42,71,.35);border:1px solid rgba(212,175,55,.35);
+  border-radius:14px;padding:14px 20px;}
 .hint{opacity:.6;font-size:14px;margin-top:22px;max-width:560px;line-height:1.9;}
 
 /* ---------- touch controls ---------- */
@@ -38,11 +41,18 @@ body.mobile.playing #touch{display:block;}
   font-size:32px;font-weight:900;display:flex;align-items:center;justify-content:center;user-select:none;
   -webkit-user-select:none;backdrop-filter:blur(2px);transition:background .1s,transform .1s;}
 .tbtn.on{background:rgba(212,175,55,.4);transform:scale(.94);}
+/* movement cluster — right thumb */
 #btnR{right:calc(24px + env(safe-area-inset-right,0px));}
 #btnL{right:calc(124px + env(safe-area-inset-right,0px));}
-#btnD{right:calc(74px + env(safe-area-inset-right,0px));bottom:calc(108px + env(safe-area-inset-bottom,0px));width:64px;height:64px;font-size:24px;}
-#btnJ{left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(104px + env(safe-area-inset-bottom,0px));}
-#btnF{left:calc(114px + env(safe-area-inset-left,0px));}
+#btnD{right:calc(78px + env(safe-area-inset-right,0px));bottom:calc(106px + env(safe-area-inset-bottom,0px));width:60px;height:60px;font-size:22px;}
+/* action cluster — left thumb. Jump on top, roll directly below it; sword + fire alongside */
+#btnJ{left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(120px + env(safe-area-inset-bottom,0px));}
+#btnRoll{left:calc(28px + env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
+  border-color:rgba(120,214,150,.6);color:#8fe0a8;font-size:30px;}
+#btnA{left:calc(120px + env(safe-area-inset-left,0px));bottom:calc(116px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
+  border-color:rgba(180,210,235,.6);color:#cfe0f0;}
+#btnF{left:calc(120px + env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
+  border-color:rgba(255,150,70,.6);color:#ffb46a;}
 
 #pauseBtn{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:calc(14px + env(safe-area-inset-left,0px));
   z-index:40;width:44px;height:44px;border-radius:12px;

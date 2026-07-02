@@ -41,6 +41,14 @@ function drawHUD(){
   ctx.quadraticCurveTo(VW - 132, 56, VW - 140, 66); ctx.quadraticCurveTo(VW - 148, 56, VW - 140, 48); ctx.fill();
   ctx.fillStyle = '#F6F1E7'; ctx.fillText('× ' + P.fire, VW - 152, 62);
   ctx.globalAlpha = 1;
+  /* sword — permanent weapon (∞ ammo) */
+  const sx = VW - 196;
+  ctx.strokeStyle = '#e8ecf0'; ctx.lineWidth = 3.4; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(sx, 62); ctx.quadraticCurveTo(sx + 11, 52, sx + 18, 60); ctx.stroke();
+  ctx.fillStyle = '#D4AF37'; ctx.fillRect(sx - 3, 58, 5, 7);
+  ctx.lineCap = 'butt';
+  ctx.fillStyle = '#F6F1E7'; ctx.font = 'bold 16px Tahoma'; ctx.textAlign = 'right';
+  ctx.fillText('∞', sx - 6, 62);
   /* score / lives / time / level name */
   ctx.textAlign = 'left'; ctx.font = 'bold 18px Tahoma';
   ctx.fillStyle = 'rgba(14,42,71,.45)'; rr(64, 10, 190, 36, 10); ctx.fill();
@@ -48,14 +56,20 @@ function drawHUD(){
   ctx.fillStyle = '#F6F1E7'; ctx.font = '14px Tahoma';
   ctx.fillText('❤ ' + G.lives + '   ⏱ ' + Math.floor(G.time) + '   ' + LEVELS[G.lvl].name, 76, 60);
 
-  /* level intro banner */
+  /* level intro banner (name + one-line story) */
   if (G.banner > 0 && G.cine <= 0){
-    const a = Math.min(1, G.banner) * Math.min(1, (2.4 - G.banner) * 3);
+    const a = Math.min(1, G.banner) * Math.min(1, (3.8 - G.banner) * 3);
+    const story = LEVELS[G.lvl].story;
+    const bh = story ? 84 : 54, bw = story ? 560 : 320;
     ctx.globalAlpha = Math.max(0, a);
-    ctx.fillStyle = 'rgba(14,42,71,.6)'; rr(VW / 2 - 160, 84, 320, 54, 14); ctx.fill();
-    ctx.strokeStyle = 'rgba(212,175,55,.8)'; ctx.lineWidth = 1.6; rr(VW / 2 - 160, 84, 320, 54, 14); ctx.stroke();
+    ctx.fillStyle = 'rgba(14,42,71,.62)'; rr(VW / 2 - bw / 2, 80, bw, bh, 14); ctx.fill();
+    ctx.strokeStyle = 'rgba(212,175,55,.8)'; ctx.lineWidth = 1.6; rr(VW / 2 - bw / 2, 80, bw, bh, 14); ctx.stroke();
     ctx.fillStyle = '#ffd75e'; ctx.font = 'bold 26px Tahoma'; ctx.textAlign = 'center';
-    ctx.fillText(LEVELS[G.lvl].name, VW / 2, 120);
+    ctx.fillText(LEVELS[G.lvl].name, VW / 2, 114);
+    if (story){
+      ctx.fillStyle = '#F6F1E7'; ctx.font = '15px Tahoma';
+      ctx.fillText(story, VW / 2, 144);
+    }
     ctx.globalAlpha = 1;
   }
 
