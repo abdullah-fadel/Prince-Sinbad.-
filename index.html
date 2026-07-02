@@ -13,15 +13,14 @@
 
 <button id="pauseBtn" aria-label="إيقاف مؤقت">⏸</button>
 
-<!-- Touch controls (movement on the right, actions on the left — RTL layout) -->
+<!-- Touch controls: joystick + sword + fire on the right,
+     jump with the merged roll/down button on the left -->
 <div id="touch">
-  <div class="tbtn move" id="btnR">▶</div>
-  <div class="tbtn move" id="btnL">◀</div>
-  <div class="tbtn dn" id="btnD">▼</div>
-  <div class="tbtn jump" id="btnJ">⬆</div>
-  <div class="tbtn roll" id="btnRoll">💨</div>
+  <div id="stick"><div id="knob"></div></div>
   <div class="tbtn sword" id="btnA">⚔</div>
   <div class="tbtn fire" id="btnF">🔥</div>
+  <div class="tbtn jump" id="btnJ">⬆</div>
+  <div class="tbtn roll" id="btnD">💨▼</div>
 </div>
 
 <!-- Rotate-your-phone overlay (portrait) -->
@@ -43,7 +42,7 @@
   <div class="best" id="bestScore"></div>
   <div class="hint">
     الحاسبة: الأسهم أو A/D للحركة • مسافة/W للقفز (مزدوجة) • J أو X للسيف • K أو Z لكرة النار • Shift أو C للدحرجة • S/▼ للنزول<br>
-    الموبايل: حرّك بأزرار ◀▶ • اقفز ⬆ وتدحرج 💨 • هاجم بالسيف ⚔ وكرة النار 🔥 • اجمع العملات واحذر الأشواك
+    الموبايل: عصا التحكم على اليمين للحركة • السيف ⚔ وكرة النار 🔥 بجانبها • اقفز ⬆ يسارًا وتحته زر 💨▼ للدحرجة والنزول
   </div>
 </div>
 

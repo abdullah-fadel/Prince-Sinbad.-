@@ -19,7 +19,7 @@ addEventListener('blur', () => {           // window lost focus: release everyth
 });
 
 /* touch buttons */
-const T = { L:false, R:false, J:false, F:false, D:false, A:false, Roll:false };
+const T = { L:false, R:false, J:false, F:false, D:false, A:false };
 function bindT(id, k){
   const el = document.getElementById(id);
   const on  = e => { e.preventDefault(); T[k] = true;  el.classList.add('on');    ac(); };
@@ -29,14 +29,39 @@ function bindT(id, k){
   el.addEventListener('pointercancel', off);
   el.addEventListener('contextmenu', e => e.preventDefault());
 }
-bindT('btnL','L'); bindT('btnR','R'); bindT('btnJ','J'); bindT('btnF','F'); bindT('btnD','D');
-bindT('btnA','A'); bindT('btnRoll','Roll');
+bindT('btnJ','J'); bindT('btnF','F'); bindT('btnD','D'); bindT('btnA','A');
+
+/* virtual joystick (right side) — drag the knob left/right to run.
+   The knob follows the thumb (clamped to the pad); a small dead zone
+   in the middle stops accidental drift. */
+const stickEl = document.getElementById('stick'), knobEl = document.getElementById('knob');
+const STICK_DEAD = 13;
+function stickUpdate(e){
+  const r = stickEl.getBoundingClientRect();
+  let dx = e.clientX - (r.left + r.width / 2);
+  let dy = e.clientY - (r.top + r.height / 2);
+  const max = r.width / 2 - 24, len = Math.hypot(dx, dy) || 1;
+  if (len > max){ dx = dx / len * max; dy = dy / len * max; }
+  knobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+  T.L = dx < -STICK_DEAD; T.R = dx > STICK_DEAD;
+}
+function stickReset(){
+  T.L = T.R = false;
+  knobEl.style.transform = 'translate(-50%, -50%)';
+}
+stickEl.addEventListener('pointerdown', e => { e.preventDefault(); stickEl.setPointerCapture(e.pointerId); stickUpdate(e); ac(); });
+stickEl.addEventListener('pointermove', e => { if (stickEl.hasPointerCapture(e.pointerId)) stickUpdate(e); });
+stickEl.addEventListener('pointerup', stickReset);
+stickEl.addEventListener('pointercancel', stickReset);
+stickEl.addEventListener('contextmenu', e => e.preventDefault());
+addEventListener('blur', stickReset);
 
 const inL    = () => keys['ArrowLeft']  || keys['KeyA'] || T.L;
 const inR    = () => keys['ArrowRight'] || keys['KeyD'] || T.R;
 const inJ    = () => keys['Space'] || keys['ArrowUp'] || keys['KeyW'] || T.J;
 const inSword= () => keys['KeyJ'] || keys['KeyX'] || T.A;                 // permanent melee
 const inF    = () => keys['KeyK'] || keys['KeyZ'] || T.F;                 // fireball (limited ammo)
-const inRoll = () => keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyC'] || T.Roll; // dodge roll
+/* the touch down-button doubles as the dodge roll (merged ▼ + 💨) */
+const inRoll = () => keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyC'] || T.D;
 const inUp   = () => keys['ArrowUp'] || keys['KeyW'] || T.J;
 const inDn   = () => keys['ArrowDown'] || keys['KeyS'] || T.D;

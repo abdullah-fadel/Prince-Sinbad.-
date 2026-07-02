@@ -46,8 +46,8 @@ const PHYS = {
   gravDown: 2650,   // gravity while falling (snappy landings)
   grav: 2300,       // gravity rising w/o jump held
   maxFall: 980,
-  jumpV: -700,
-  doubleJumpV: -620,
+  jumpV: -755,
+  doubleJumpV: -665,
   coyote: 0.12,     // grace period after leaving a ledge
   jumpBuffer: 0.14, // press jump slightly before landing and it still fires
   jumpCut: 0.45     // velocity multiplier when jump is released early

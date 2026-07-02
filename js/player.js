@@ -75,9 +75,12 @@ function updatePlayer(dt){
   const acc = P.onG ? PHYS.acc : PHYS.accAir;
   let mx = 0; if (inL()) mx = -1; if (inR()) mx = 1;
 
-  /* ---- dodge roll: a quick invulnerable dash (start on the ground) ---- */
+  /* ---- dodge roll: a quick invulnerable dash (start on the ground).
+     The touch ▼ button doubles as roll, so skip rolling on ladders to
+     let the same press climb down instead. ---- */
   P.rollCool -= dt;
-  if (inRoll() && !rollHeld && P.rollCool <= 0 && P.rollT <= 0 && P.onG && !P.climb){
+  if (inRoll() && !rollHeld && P.rollCool <= 0 && P.rollT <= 0 && P.onG && !P.climb &&
+      !overlapTile(P, 'L', 8)){
     P.rollT = ROLL_TIME; P.rollCool = ROLL_COOL; P.rollDir = mx || P.face; P.face = P.rollDir;
     SFX.roll(); puff(P.x + P.w / 2, P.y + P.h, 9, '#d9c9a8', 130, .45);
   }
