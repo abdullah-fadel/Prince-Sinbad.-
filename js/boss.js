@@ -85,7 +85,7 @@ function hitEnemy(e, dmg, srcx){
   e.x += (Math.sign(e.x - srcx) || 1) * 8;          // knockback away from the attacker
   if (e.hp <= 0){
     e.dead = .01;
-    const pts = e.t === 'scorp' ? 200 : 300;
+    const pts = enemyPoints(e.t);
     G.score += pts; SFX.stomp();
     ring(e.x + e.w / 2, e.y + e.h / 2, '#ff9a2e', 36);
     popText(e.x + e.w / 2, e.y - 8, '+' + pts);
@@ -115,7 +115,7 @@ function updateFireballs(dt){
     let dead = f.t > 1.6 || solid(tileAt(c, r));
 
     for (const e of G.ents){
-      if ((e.t === 'scorp' || e.t === 'bandit') && !e.dead &&
+      if ((e.t === 'scorp' || e.t === 'bandit' || e.t === 'wolf' || e.t === 'elite') && !e.dead &&
           Math.abs(f.x - (e.x + e.w / 2)) < e.w / 2 + f.r &&
           Math.abs(f.y - (e.y + e.h / 2)) < e.h / 2 + f.r){
         hitEnemy(e, 1, f.x); dead = true;

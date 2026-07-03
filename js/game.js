@@ -47,7 +47,12 @@ function loop(ts){
   drawTiles(G.time);
   drawPlatforms();
   drawMotes();
-  for (const e of G.ents){ if (e.t === 'scorp') drawScorp(e); if (e.t === 'bandit') drawBandit(e); }
+  for (const e of G.ents){
+    if (e.t === 'scorp') drawScorp(e);
+    else if (e.t === 'bandit') drawBandit(e);
+    else if (e.t === 'wolf') drawWolf(e);
+    else if (e.t === 'elite') drawElite(e);
+  }
   drawBoss(); drawPrincess(dt); drawFireballs(); drawParts(); drawHero();
   ctx.restore();
   drawVignette();

@@ -25,13 +25,27 @@ function drawShadow(cx, footY, w){
   ctx.fill();
 }
 
-/* ---- background: warm Arabian sunset with parallax ---- */
-let skyGrad = null, vignette = null;
+/* ---- background: biome-aware sky/skyline/ground, with parallax.
+   Each scenario (desert, forest, mountain, Babylon ruins) gets its own
+   sky gradient, mist tint, skyline silhouette and ground color so the
+   journey reads as moving through distinct places, not palette swaps. */
+const BIOME_BG = {
+  desert:   { sky:['#f9c979','#f0a668','#d97e5a','#b45f4d'], sun:'#fff3cf', cloud:'255,235,200', sil:'150,84,66',  ground:'96,48,42',  shape:'domes' },
+  forest:   { sky:['#bfe0a8','#8fc47a','#5c9c5e','#3c6b48'], sun:'#eafccb', cloud:'220,240,200', sil:'40,74,46',   ground:'42,58,30',  shape:'trees' },
+  mountain: { sky:['#cfe3f2','#a8c7dd','#7c9cbd','#516583'], sun:'#f2f9ff', cloud:'230,240,250', sil:'70,86,102',  ground:'70,74,84',  shape:'peaks' },
+  babylon:  { sky:['#f5d98a','#e0b463','#b98a4a','#7a5a34'], sun:'#fff0c8', cloud:'240,220,170', sil:'150,110,58', ground:'80,58,30',  shape:'ziggurat' }
+};
+function biomeOf(){ return (LEVELS[G.lvl] && LEVELS[G.lvl].biome) || 'desert'; }
+
+let skyGrads = {}, vignette = null;
 function drawBG(){
+  const bk = biomeOf(), bio = BIOME_BG[bk] || BIOME_BG.desert;
+  let skyGrad = skyGrads[bk];
   if (!skyGrad){
     skyGrad = ctx.createLinearGradient(0, 0, 0, VH);
-    skyGrad.addColorStop(0, '#f9c979'); skyGrad.addColorStop(.45, '#f0a668');
-    skyGrad.addColorStop(.75, '#d97e5a'); skyGrad.addColorStop(1, '#b45f4d');
+    skyGrad.addColorStop(0, bio.sky[0]); skyGrad.addColorStop(.45, bio.sky[1]);
+    skyGrad.addColorStop(.75, bio.sky[2]); skyGrad.addColorStop(1, bio.sky[3]);
+    skyGrads[bk] = skyGrad;
   }
   ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, VW, VH);
   /* sun with pulsing halo */
@@ -40,31 +54,33 @@ function drawBG(){
   sg.addColorStop(0, 'rgba(255,244,200,.95)'); sg.addColorStop(.25, 'rgba(255,214,130,.55)');
   sg.addColorStop(1, 'rgba(255,214,130,0)');
   ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, 180, 0, 7); ctx.fill();
-  ctx.fillStyle = '#fff3cf'; ctx.beginPath(); ctx.arc(sx, sy, 34, 0, 7); ctx.fill();
+  ctx.fillStyle = bio.sun; ctx.beginPath(); ctx.arc(sx, sy, 34, 0, 7); ctx.fill();
   /* clouds — two depths */
-  ctx.fillStyle = 'rgba(255,235,200,.30)';
+  ctx.fillStyle = 'rgba(' + bio.cloud + ',.30)';
   for (let i = 0; i < 5; i++){
     const cx2 = ((i * 260 - cam.x * .05 - G.time * 4) % (VW + 300) + VW + 300) % (VW + 300) - 150, cy = 44 + i * 34;
     ctx.beginPath(); ctx.ellipse(cx2, cy, 80, 15, 0, 0, 7); ctx.ellipse(cx2 + 50, cy + 8, 55, 12, 0, 0, 7); ctx.fill();
   }
-  ctx.fillStyle = 'rgba(255,235,200,.45)';
+  ctx.fillStyle = 'rgba(' + bio.cloud + ',.45)';
   for (let i = 0; i < 4; i++){
     const cx2 = ((i * 340 + 120 - cam.x * .09 - G.time * 7) % (VW + 340) + VW + 340) % (VW + 340) - 170, cy = 90 + i * 42;
     ctx.beginPath(); ctx.ellipse(cx2, cy, 62, 12, 0, 0, 7); ctx.ellipse(cx2 + 40, cy + 7, 42, 10, 0, 0, 7); ctx.fill();
   }
-  /* far city silhouettes (domes & minarets) */
-  drawCity(-cam.x * .15, VH * .62, 'rgba(150,84,66,.55)', 1);
-  drawCity(-cam.x * .28 + 220, VH * .70, 'rgba(120,62,52,.7)', 1.25);
-  /* heat shimmer above the horizon: faint drifting streaks */
-  ctx.fillStyle = 'rgba(255,240,210,.06)';
-  for (let i = 0; i < 3; i++){
-    const hy = VH * .58 + i * 22 + Math.sin(G.time * 1.6 + i * 2.1) * 4;
-    ctx.beginPath();
-    ctx.ellipse(VW / 2 + Math.sin(G.time * .8 + i) * 120, hy, VW * .45, 5 + Math.sin(G.time * 3 + i) * 2, 0, 0, 7);
-    ctx.fill();
+  /* far skyline silhouettes — shape depends on the scenario */
+  drawSkyline(-cam.x * .15, VH * .62, 'rgba(' + bio.sil + ',.55)', 1, bio.shape);
+  drawSkyline(-cam.x * .28 + 220, VH * .70, 'rgba(' + bio.sil + ',.7)', 1.25, bio.shape);
+  /* heat shimmer above the horizon (desert only) */
+  if (bk === 'desert'){
+    ctx.fillStyle = 'rgba(255,240,210,.06)';
+    for (let i = 0; i < 3; i++){
+      const hy = VH * .58 + i * 22 + Math.sin(G.time * 1.6 + i * 2.1) * 4;
+      ctx.beginPath();
+      ctx.ellipse(VW / 2 + Math.sin(G.time * .8 + i) * 120, hy, VW * .45, 5 + Math.sin(G.time * 3 + i) * 2, 0, 0, 7);
+      ctx.fill();
+    }
   }
-  /* dunes */
-  ctx.fillStyle = 'rgba(96,48,42,.85)';
+  /* ground */
+  ctx.fillStyle = 'rgba(' + bio.ground + ',.85)';
   ctx.beginPath(); ctx.moveTo(0, VH);
   for (let x = 0; x <= VW; x += 20){
     const y = VH * .82 + Math.sin((x + cam.x * .4) * .006) * 26;
@@ -72,34 +88,79 @@ function drawBG(){
   }
   ctx.lineTo(VW, VH); ctx.fill();
 }
-function drawCity(off, base, col, s){
+function drawSkyline(off, base, col, s, shape){
   ctx.fillStyle = col; const W = 560 * s;
   for (let k = -1; k < Math.ceil(VW / W) + 1; k++){
     const ox = ((off % W) + W) % W - W + k * W;
     ctx.save(); ctx.translate(ox, base); ctx.scale(s, s);
-    ctx.fillRect(30, -60, 90, 120); ctx.beginPath(); ctx.arc(75, -60, 45, 3.14, 0); ctx.fill();
-    ctx.fillRect(150, -130, 16, 190); ctx.beginPath(); ctx.arc(158, -130, 12, 3.14, 0); ctx.fill();
-    ctx.fillRect(200, -40, 120, 100); ctx.beginPath(); ctx.arc(260, -40, 32, 3.14, 0); ctx.fill();
-    ctx.fillRect(350, -90, 14, 150); ctx.beginPath(); ctx.arc(357, -90, 10, 3.14, 0); ctx.fill();
-    ctx.fillRect(400, -30, 100, 90); ctx.beginPath(); ctx.arc(450, -30, 28, 3.14, 0); ctx.fill();
+    if (shape === 'trees') drawTreeSilhouette();
+    else if (shape === 'peaks') drawPeakSilhouette();
+    else if (shape === 'ziggurat') drawZigguratSilhouette();
+    else drawDomeSilhouette();
     ctx.restore();
   }
 }
+/* desert: domes & minarets */
+function drawDomeSilhouette(){
+  ctx.fillRect(30, -60, 90, 120); ctx.beginPath(); ctx.arc(75, -60, 45, 3.14, 0); ctx.fill();
+  ctx.fillRect(150, -130, 16, 190); ctx.beginPath(); ctx.arc(158, -130, 12, 3.14, 0); ctx.fill();
+  ctx.fillRect(200, -40, 120, 100); ctx.beginPath(); ctx.arc(260, -40, 32, 3.14, 0); ctx.fill();
+  ctx.fillRect(350, -90, 14, 150); ctx.beginPath(); ctx.arc(357, -90, 10, 3.14, 0); ctx.fill();
+  ctx.fillRect(400, -30, 100, 90); ctx.beginPath(); ctx.arc(450, -30, 28, 3.14, 0); ctx.fill();
+}
+/* forest: a row of pine/cedar silhouettes at varying heights */
+function drawTreeSilhouette(){
+  const trees = [[20,140],[90,190],[160,150],[230,210],[300,160],[370,180],[440,145],[500,200]];
+  for (const [x, h] of trees){
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x - 22, -h * .55); ctx.lineTo(x - 10, -h * .55);
+    ctx.lineTo(x - 18, -h * .8); ctx.lineTo(x - 6, -h * .8); ctx.lineTo(x, -h); ctx.lineTo(x + 6, -h * .8);
+    ctx.lineTo(x + 18, -h * .8); ctx.lineTo(x + 10, -h * .55); ctx.lineTo(x + 22, -h * .55); ctx.closePath(); ctx.fill();
+    ctx.fillRect(x - 3, -6, 6, 10);
+  }
+}
+/* mountain: jagged snow-capped peaks */
+function drawPeakSilhouette(){
+  ctx.beginPath(); ctx.moveTo(0, 0);
+  ctx.lineTo(60, -170); ctx.lineTo(120, -40); ctx.lineTo(190, -220); ctx.lineTo(260, -60);
+  ctx.lineTo(330, -190); ctx.lineTo(400, -30); ctx.lineTo(470, -150); ctx.lineTo(540, 0);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.55)';
+  ctx.beginPath(); ctx.moveTo(45, -140); ctx.lineTo(60, -170); ctx.lineTo(75, -140); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(175, -190); ctx.lineTo(190, -220); ctx.lineTo(205, -190); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(315, -160); ctx.lineTo(330, -190); ctx.lineTo(345, -160); ctx.closePath(); ctx.fill();
+}
+/* babylon: stepped ziggurats and a slender obelisk */
+function drawZigguratSilhouette(){
+  for (let s = 0; s < 5; s++) ctx.fillRect(40 + s * 10, -22 * (s + 1), 130 - s * 20, 22);
+  for (let s = 0; s < 4; s++) ctx.fillRect(300 + s * 9, -20 * (s + 1), 100 - s * 18, 20);
+  ctx.fillRect(470, -160, 10, 160);
+  ctx.beginPath(); ctx.moveTo(470, -160); ctx.lineTo(475, -176); ctx.lineTo(480, -160); ctx.closePath(); ctx.fill();
+}
+
+/* per-biome tint for solid ground tiles, so each scenario's terrain
+   (sand, forest loam, mountain stone, sunbaked brick) reads distinctly */
+const BIOME_TILE = {
+  desert:   { face:'#b98a52', shade:'#a5764a', top:'#d9b077' },
+  forest:   { face:'#6f8f47', shade:'#5c7a3a', top:'#8fae5c' },
+  mountain: { face:'#8f96a0', shade:'#767d88', top:'#c7ccd2' },
+  babylon:  { face:'#c7a55c', shade:'#a8863e', top:'#e8cf8a' }
+};
 
 /* ---- tiles (culled to camera view) ---- */
 function drawTiles(t){
   const vw = camViewW(), vh = camViewH();
   const c0 = Math.max(0, Math.floor(cam.x / TILE) - 1), c1 = Math.min(G.W - 1, Math.ceil((cam.x + vw) / TILE) + 1);
   const r0 = Math.max(0, Math.floor(cam.y / TILE) - 1), r1 = Math.min(G.H - 1, Math.ceil((cam.y + vh) / TILE) + 2);
+  const bioT = BIOME_TILE[biomeOf()] || BIOME_TILE.desert;
   for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++){
     const ch = G.grid[r][c], x = c * TILE, y = r * TILE;
     if (ch === '#'){
-      ctx.fillStyle = '#b98a52'; ctx.fillRect(x, y, TILE, TILE);
-      ctx.fillStyle = '#a5764a'; ctx.fillRect(x + 3, y + 3, TILE - 6, TILE - 6);
+      ctx.fillStyle = bioT.face; ctx.fillRect(x, y, TILE, TILE);
+      ctx.fillStyle = bioT.shade; ctx.fillRect(x + 3, y + 3, TILE - 6, TILE - 6);
       ctx.fillStyle = 'rgba(0,0,0,.12)';
       if ((c + r) % 2) ctx.fillRect(x + 6, y + TILE / 2, TILE - 12, 3);
       else ctx.fillRect(x + TILE / 2, y + 8, 3, TILE - 16);
-      if (!solid(tileAt(c, r - 1))){ ctx.fillStyle = '#d9b077'; ctx.fillRect(x, y, TILE, 7); }
+      if (!solid(tileAt(c, r - 1))){ ctx.fillStyle = bioT.top; ctx.fillRect(x, y, TILE, 7); }
     }
     else if (ch === '='){
       ctx.fillStyle = '#8a5a34'; rr(x + 2, y + 4, TILE - 4, 14, 5); ctx.fill();

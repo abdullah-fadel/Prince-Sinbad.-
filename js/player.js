@@ -50,7 +50,7 @@ function meleeStrike(){
   };
   const cx = P.x + P.w / 2;
   for (const e of G.ents)
-    if ((e.t === 'scorp' || e.t === 'bandit') && !e.dead && aabb(box, e)) hitEnemy(e, 1, cx);
+    if ((e.t === 'scorp' || e.t === 'bandit' || e.t === 'wolf' || e.t === 'elite') && !e.dead && aabb(box, e)) hitEnemy(e, 1, cx);
   const b = G.boss;
   if (b && !b.dead && aabb(box, b)) hitBoss(1);
   ring(cx + P.face * 26, P.y + P.h / 2, 'rgba(255,250,235,.85)', 30);
@@ -239,8 +239,16 @@ function updatePlayer(dt){
     if (!P.dead){ P.x = G.checkpoint.x; P.y = G.checkpoint.y; P.vx = 0; P.vy = 0; camSnap(); }
   }
   if (P.y > G.H * TILE + 100) killPlayer();
+  G.eliteWarnT = Math.max(0, G.eliteWarnT - dt);
   const dr = overlapTile(P, 'D', 8);
-  if (dr && !LEVELS[G.lvl].boss) levelComplete();
+  if (dr && !LEVELS[G.lvl].boss){
+    if (G.elite && !G.elite.dead && G.elite.hp > 0){
+      if (G.eliteWarnT <= 0){
+        G.eliteWarnT = 1.4; SFX.hit();
+        popText(P.x + P.w / 2, P.y - 12, 'اهزم ' + (G.elite.name || 'الحارس') + ' أولاً!', '#ff7b7b');
+      }
+    } else levelComplete();
+  }
 
   /* ---- animation state ---- */
   P.inv = Math.max(0, P.inv - dt);

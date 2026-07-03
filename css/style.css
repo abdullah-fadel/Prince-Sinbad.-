@@ -45,7 +45,7 @@ body.mobile.playing #touch{display:block;}
    #stickZone is a large invisible pad; wherever you press inside it,
    the visible base + knob spawn right under your thumb. Tune size by
    changing --stick-base/--stick-knob (JS reads --stick-max for drag range). */
-:root{ --stick-base:136px; --stick-knob:60px; --stick-max:52px; }
+:root{ --stick-base:96px; --stick-knob:42px; --stick-max:34px; }
 #stickZone{position:absolute;right:0;bottom:0;width:64%;height:76%;pointer-events:auto;touch-action:none;}
 #stickBase{position:absolute;left:0;top:0;width:var(--stick-base);height:var(--stick-base);border-radius:50%;pointer-events:none;
   background:rgba(246,241,231,.10);border:2px solid rgba(212,175,55,.5);backdrop-filter:blur(2px);

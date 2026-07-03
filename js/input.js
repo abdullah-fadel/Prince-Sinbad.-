@@ -39,7 +39,7 @@ bindT('btnJ','J'); bindT('btnF','F'); bindT('btnD','D'); bindT('btnA','A');
 const stickZone = document.getElementById('stickZone');
 const stickBase = document.getElementById('stickBase'), knobEl = document.getElementById('knob');
 const stickVar = n => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n)) || 0;
-const STICK_DEAD = 14;
+const STICK_DEAD = 9;
 let stickCX = 0, stickCY = 0, stickOn = false;
 
 function stickShow(x, y){

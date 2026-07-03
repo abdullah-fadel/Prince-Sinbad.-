@@ -146,16 +146,17 @@ function drawHero(){
 
 /* ---- scorpion ---- */
 function drawScorp(e){
+  const pal = e.pal || PAL.desert;
   if (!e.dead) drawShadow(e.x + e.w / 2, e.y + e.h, e.w * .8);
   ctx.save(); ctx.translate(e.x + e.w / 2, e.y + e.h); ctx.scale(Math.sign(e.vx) || 1, 1);
   if (e.dead) ctx.scale(1, -1);
   const w = Math.sin(e.anim * 10) * 2;
-  ctx.fillStyle = e.hurt > 0 ? '#ffb0a0' : '#a24a2e';
+  ctx.fillStyle = e.hurt > 0 ? '#ffb0a0' : pal.body;
   ctx.beginPath(); ctx.ellipse(0, -12, 20, 11, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = e.hurt > 0 ? '#ffb0a0' : '#843a22';
+  ctx.fillStyle = e.hurt > 0 ? '#ffb0a0' : pal.body2;
   ctx.beginPath(); ctx.ellipse(-14, -14, 8, 7, 0, 0, 7); ctx.fill();
   /* tail */
-  ctx.strokeStyle = '#843a22'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.strokeStyle = pal.body2; ctx.lineWidth = 5; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(14, -14); ctx.quadraticCurveTo(26, -30 + w, 18, -36 + w); ctx.stroke();
   ctx.fillStyle = '#3a2a1a'; ctx.beginPath(); ctx.arc(17, -38 + w, 3.4, 0, 7); ctx.fill();
   /* legs */
@@ -165,7 +166,7 @@ function drawScorp(e){
     ctx.beginPath(); ctx.moveTo(-8 + i * 8, -8); ctx.lineTo(-11 + i * 8 + lw, 0); ctx.stroke();
   }
   /* pincers + eyes */
-  ctx.fillStyle = '#843a22'; ctx.beginPath(); ctx.ellipse(20, -8, 6, 4, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = pal.body2; ctx.beginPath(); ctx.ellipse(20, -8, 6, 4, 0, 0, 7); ctx.fill();
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(8, -17, 3, 0, 7); ctx.fill();
   ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(9, -17, 1.5, 0, 7); ctx.fill();
   ctx.lineCap = 'butt'; ctx.restore();
@@ -173,18 +174,19 @@ function drawScorp(e){
 
 /* ---- bandit ---- */
 function drawBandit(e){
+  const pal = e.pal || PAL.desert;
   if (!e.dead) drawShadow(e.x + e.w / 2, e.y + e.h, e.w);
   ctx.save(); ctx.translate(e.x + e.w / 2, e.y); const d = Math.sign(e.vx) || 1; ctx.scale(d, 1);
   if (e.dead) ctx.rotate(.9);
   const run = Math.sin(e.anim * 11) * 5, hurt = e.hurt > 0;
   /* legs */
-  ctx.fillStyle = '#5a4632';
+  ctx.fillStyle = pal.robeDark;
   ctx.fillRect(-8 + run * .4, 38, 7, 14); ctx.fillRect(2 - run * .4, 38, 7, 14);
   /* body */
-  ctx.fillStyle = hurt ? '#ffb0a0' : '#7a5a3a'; rr(-11, 16, 22, 26, 7); ctx.fill();
-  ctx.fillStyle = '#3a2c1c'; ctx.fillRect(-11, 28, 22, 4);
+  ctx.fillStyle = hurt ? '#ffb0a0' : pal.robe; rr(-11, 16, 22, 26, 7); ctx.fill();
+  ctx.fillStyle = pal.robeDark; ctx.fillRect(-11, 28, 22, 4);
   /* sword arm — raised high during windup, thrust while lunging */
-  ctx.strokeStyle = hurt ? '#ffb0a0' : '#7a5a3a'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.strokeStyle = hurt ? '#ffb0a0' : pal.robe; ctx.lineWidth = 5; ctx.lineCap = 'round';
   const sw = e.windup > 0 ? -1.6 : e.lunge > 0 ? -.9 : Math.sin(e.anim * 11) * .2;
   ctx.save(); ctx.translate(8, 20); ctx.rotate(sw);
   ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(10, 4); ctx.stroke();
@@ -194,18 +196,100 @@ function drawBandit(e){
   ctx.fillStyle = '#c78d59'; ctx.beginPath(); ctx.arc(2, 8, 9, 0, 7); ctx.fill();
   ctx.fillStyle = '#241a12'; ctx.beginPath(); ctx.ellipse(2, 13, 6, 3, 0, 0, 7); ctx.fill(); // beard
   /* mask + eye */
-  ctx.fillStyle = '#2a2a2a'; ctx.fillRect(-6, 3, 16, 5);
+  ctx.fillStyle = pal.mask; ctx.fillRect(-6, 3, 16, 5);
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(6, 5.5, 2.4, 0, 7); ctx.fill();
   ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(6.8, 5.5, 1.2, 0, 7); ctx.fill();
-  /* red turban */
-  ctx.fillStyle = '#a83232'; ctx.beginPath(); ctx.arc(2, 3, 9.5, 3.14, 0); ctx.fill();
-  ctx.fillStyle = '#8a2626'; ctx.fillRect(-8, 1, 20, 4);
+  /* turban */
+  ctx.fillStyle = pal.turban; ctx.beginPath(); ctx.arc(2, 3, 9.5, 3.14, 0); ctx.fill();
+  ctx.fillStyle = pal.turbanDark; ctx.fillRect(-8, 1, 20, 4);
   ctx.lineCap = 'butt'; ctx.restore();
   /* alert "!" when the bandit spots the player */
   if (e.alert > 0 && !e.dead){
     ctx.fillStyle = 'rgba(255,220,80,' + Math.min(1, e.alert * 2) + ')';
     ctx.font = 'bold 22px Tahoma'; ctx.textAlign = 'center';
     ctx.fillText('!', e.x + e.w / 2, e.y - 10 - Math.sin(e.alert * 12) * 3);
+  }
+}
+
+/* ---- wolf: low, fast forest/mountain predator ---- */
+function drawWolf(e){
+  const pal = e.pal || PAL.forest;
+  if (!e.dead) drawShadow(e.x + e.w / 2, e.y + e.h, e.w * .85);
+  ctx.save(); ctx.translate(e.x + e.w / 2, e.y + e.h); ctx.scale(Math.sign(e.vx) || 1, 1);
+  if (e.dead) ctx.scale(1, -1);
+  const run = Math.sin(e.anim * 16), hurt = e.hurt > 0;
+  const bodyC = hurt ? '#ffb0a0' : pal.body, darkC = hurt ? '#ffb0a0' : pal.body2;
+  /* legs (trotting) */
+  ctx.strokeStyle = darkC; ctx.lineWidth = 3.4; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-12, -6); ctx.lineTo(-12 + run * 4, -1);
+  ctx.moveTo(10, -6); ctx.lineTo(10 - run * 4, -1);
+  ctx.moveTo(-6, -8); ctx.lineTo(-6 - run * 3, -1);
+  ctx.moveTo(4, -8); ctx.lineTo(4 + run * 3, -1);
+  ctx.stroke();
+  /* body */
+  ctx.fillStyle = bodyC;
+  ctx.beginPath(); ctx.ellipse(-1, -14, 17, 9, -.05, 0, 7); ctx.fill();
+  /* tail */
+  ctx.strokeStyle = darkC; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-16, -14); ctx.quadraticCurveTo(-26, -18 + run * 2, -24, -8); ctx.stroke();
+  /* head + ears */
+  ctx.fillStyle = bodyC;
+  ctx.beginPath(); ctx.ellipse(15, -16, 8, 6.4, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(11, -22); ctx.lineTo(14, -30); ctx.lineTo(16, -21); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(17, -22); ctx.lineTo(21, -29); ctx.lineTo(20, -20); ctx.closePath(); ctx.fill();
+  /* snout + eye */
+  ctx.fillStyle = darkC; ctx.beginPath(); ctx.ellipse(22, -14, 4, 3, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#ffe9a8'; ctx.beginPath(); ctx.arc(17, -18, 1.6, 0, 7); ctx.fill();
+  ctx.lineCap = 'butt'; ctx.restore();
+}
+
+/* ---- elite guard: the tougher foe blocking each new scenario's exit ---- */
+function drawElite(e){
+  const pal = e.pal || PAL.desert;
+  if (!e.dead) drawShadow(e.x + e.w / 2, e.y + e.h, e.w * 1.1);
+  ctx.save(); ctx.translate(e.x + e.w / 2, e.y); const d = Math.sign(e.vx) || 1; ctx.scale(d, 1);
+  if (e.dead) ctx.rotate(.9);
+  const run = Math.sin(e.anim * 9) * 5, hurt = e.hurt > 0;
+  /* legs */
+  ctx.fillStyle = pal.robeDark;
+  ctx.fillRect(-11 + run * .3, 46, 9, 18); ctx.fillRect(3 - run * .3, 46, 9, 18);
+  /* cape */
+  ctx.fillStyle = pal.turbanDark;
+  ctx.beginPath(); ctx.moveTo(-14, 14); ctx.quadraticCurveTo(-26, 30, -20, 60); ctx.lineTo(-10, 54); ctx.lineTo(-10, 18); ctx.closePath(); ctx.fill();
+  /* body (broader than a bandit) */
+  ctx.fillStyle = hurt ? '#ffb0a0' : pal.robe; rr(-14, 18, 28, 32, 8); ctx.fill();
+  ctx.fillStyle = pal.robeDark; ctx.fillRect(-14, 34, 28, 5);
+  /* sword arm */
+  ctx.strokeStyle = hurt ? '#ffb0a0' : pal.robe; ctx.lineWidth = 6.5; ctx.lineCap = 'round';
+  const sw = e.windup > 0 ? -1.6 : e.lunge > 0 ? -.9 : Math.sin(e.anim * 9) * .2;
+  ctx.save(); ctx.translate(11, 24); ctx.rotate(sw);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(13, 5); ctx.stroke();
+  ctx.fillStyle = '#e8ecf0'; ctx.beginPath(); ctx.moveTo(13, 2); ctx.lineTo(40, -6); ctx.lineTo(14, 9); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  /* head + helm */
+  ctx.fillStyle = '#c78d59'; ctx.beginPath(); ctx.arc(3, 9, 11, 0, 7); ctx.fill();
+  ctx.fillStyle = '#241a12'; ctx.beginPath(); ctx.ellipse(3, 16, 7, 3.6, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = pal.mask; ctx.fillRect(-8, 3, 20, 6);
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(8, 6, 2.8, 0, 7); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(9, 6, 1.4, 0, 7); ctx.fill();
+  ctx.fillStyle = pal.turban; ctx.beginPath(); ctx.arc(3, 2, 12, 3.14, 0); ctx.fill();
+  ctx.fillStyle = pal.turbanDark; ctx.fillRect(-10, -1, 26, 5);
+  ctx.lineCap = 'butt'; ctx.restore();
+
+  /* nameplate + hp bar */
+  if (!e.dead){
+    const bw = 56, bx = e.x + e.w / 2 - bw / 2, by = e.y - 26;
+    ctx.textAlign = 'center'; ctx.font = 'bold 12px Tahoma';
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillText(e.name || 'الحارس', e.x + e.w / 2, by - 4);
+    ctx.fillStyle = 'rgba(0,0,0,.5)'; rr(bx, by, bw, 7, 3); ctx.fill();
+    ctx.fillStyle = '#e0483c'; rr(bx, by, bw * Math.max(0, e.hp / e.maxHp), 7, 3); ctx.fill();
+  }
+  /* alert "!" like a bandit */
+  if (e.alert > 0 && !e.dead){
+    ctx.fillStyle = 'rgba(255,220,80,' + Math.min(1, e.alert * 2) + ')';
+    ctx.font = 'bold 24px Tahoma'; ctx.textAlign = 'center';
+    ctx.fillText('!', e.x + e.w / 2, e.y - 40 - Math.sin(e.alert * 12) * 3);
   }
 }
 

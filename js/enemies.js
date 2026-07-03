@@ -21,14 +21,14 @@ function updateEnemies(dt){
       continue;
     }
 
-    if (e.t === 'scorp' || e.t === 'bandit'){
+    if (e.t === 'scorp' || e.t === 'bandit' || e.t === 'wolf' || e.t === 'elite'){
       e.anim += dt;
       e.hurt = Math.max(0, e.hurt - dt);
       e.alert = Math.max(0, (e.alert || 0) - dt);
       e.hitWall = false;
 
-      /* bandit vision: spot the player, flash "!", wind up, then lunge */
-      if (e.t === 'bandit'){
+      /* bandit/elite vision: spot the player, flash "!", wind up, then lunge */
+      if (e.t === 'bandit' || e.t === 'elite'){
         const dx = P.x - e.x, dy = Math.abs(P.y - e.y);
         const facing = Math.sign(e.vx) || -1;
         if (e.lunge > 0) e.lunge -= dt;
@@ -51,9 +51,10 @@ function updateEnemies(dt){
         else if (Math.random() < dt * .25){ e.pause = .8 + Math.random(); }
       }
 
-      const winding = e.t === 'bandit' && e.windup > 0;
+      const winding = (e.t === 'bandit' || e.t === 'elite') && e.windup > 0;
       const paused = (e.t === 'scorp' && e.pause > 0) || winding;
-      const spd = paused ? 0 : (e.t === 'bandit' && e.lunge > 0) ? 170 : Math.abs(e.vx);
+      const lunging = (e.t === 'bandit' || e.t === 'elite') && e.lunge > 0;
+      const spd = paused ? 0 : lunging ? (e.t === 'elite' ? 210 : 170) : Math.abs(e.vx);
       const dir = Math.sign(e.vx) || -1;
       e.x += dir * spd * dt; e.vx = dir * Math.abs(e.vx);
       collideX(e);
@@ -63,13 +64,15 @@ function updateEnemies(dt){
       /* contact with player */
       if (!P.dead && aabb(e, P)){
         if (P.vy > 160 && P.y + P.h < e.y + e.h * .6){ // stomp
-          e.hp = 0; e.dead = .01; P.vy = -520; P.jumps = 1;
-          const pts = e.t === 'scorp' ? 200 : 300;
-          G.score += pts; G.hitstop = Math.max(G.hitstop, .05);
-          SFX.stomp();
+          P.vy = -520; P.jumps = 1; G.hitstop = Math.max(G.hitstop, .05); SFX.stomp();
           puff(e.x + e.w / 2, e.y, 10, '#c9a15a', 130, .5);
-          ring(e.x + e.w / 2, e.y + e.h / 2, '#ffe9b0', 34);
-          popText(e.x + e.w / 2, e.y - 8, '+' + pts);
+          /* the elite guard shrugs off a stomp into a normal hit instead of an instant kill */
+          if (e.t === 'elite'){ e.hp--; e.hurt = .2; } else e.hp = 0;
+          if (e.hp <= 0 && !e.dead){
+            e.dead = .01; const pts = enemyPoints(e.t); G.score += pts;
+            ring(e.x + e.w / 2, e.y + e.h / 2, '#ffe9b0', 34);
+            popText(e.x + e.w / 2, e.y - 8, '+' + pts);
+          }
         } else hurtPlayer(1, Math.sign(P.x - e.x));
       }
     }
