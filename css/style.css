@@ -41,17 +41,23 @@ body.mobile.playing #touch{display:block;}
   font-size:32px;font-weight:900;display:flex;align-items:center;justify-content:center;user-select:none;
   -webkit-user-select:none;backdrop-filter:blur(2px);transition:background .1s,transform .1s;}
 .tbtn.on{background:rgba(212,175,55,.4);transform:scale(.94);}
-/* right side: joystick with sword + fire beside it */
-#stick{position:absolute;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));
-  width:150px;height:150px;border-radius:50%;pointer-events:auto;touch-action:none;
-  background:rgba(246,241,231,.10);border:2px solid rgba(212,175,55,.45);backdrop-filter:blur(2px);}
-#knob{position:absolute;left:50%;top:50%;width:62px;height:62px;border-radius:50%;
-  transform:translate(-50%,-50%);pointer-events:none;
-  background:rgba(212,175,55,.35);border:2px solid rgba(212,175,55,.75);
-  box-shadow:0 3px 10px rgba(0,0,0,.3);transition:transform .05s linear;}
-#btnA{right:calc(192px + env(safe-area-inset-right,0px));bottom:calc(112px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
+/* right side: a free-floating joystick — it isn't pinned to one spot.
+   #stickZone is a large invisible pad; wherever you press inside it,
+   the visible base + knob spawn right under your thumb. Tune size by
+   changing --stick-base/--stick-knob (JS reads --stick-max for drag range). */
+:root{ --stick-base:136px; --stick-knob:60px; --stick-max:52px; }
+#stickZone{position:absolute;right:0;bottom:0;width:64%;height:76%;pointer-events:auto;touch-action:none;}
+#stickBase{position:absolute;left:0;top:0;width:var(--stick-base);height:var(--stick-base);border-radius:50%;pointer-events:none;
+  background:rgba(246,241,231,.10);border:2px solid rgba(212,175,55,.5);backdrop-filter:blur(2px);
+  transform:translate(-50%,-50%);opacity:0;}
+#stickBase.on{opacity:1;}
+#knob{position:absolute;left:0;top:0;width:var(--stick-knob);height:var(--stick-knob);border-radius:50%;pointer-events:none;
+  background:rgba(212,175,55,.35);border:2px solid rgba(212,175,55,.8);
+  box-shadow:0 3px 10px rgba(0,0,0,.3);transform:translate(-50%,-50%);opacity:0;}
+#knob.on{opacity:1;transition:transform .05s linear;}
+#btnA{right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(112px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
   border-color:rgba(180,210,235,.6);color:#cfe0f0;}
-#btnF{right:calc(192px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
+#btnF{right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
   border-color:rgba(255,150,70,.6);color:#ffb46a;}
 /* left side: jump on top, merged roll/down button below it */
 #btnJ{left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(120px + env(safe-area-inset-bottom,0px));}

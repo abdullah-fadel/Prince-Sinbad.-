@@ -13,10 +13,13 @@
 
 <button id="pauseBtn" aria-label="إيقاف مؤقت">⏸</button>
 
-<!-- Touch controls: joystick + sword + fire on the right,
+<!-- Touch controls: a free-floating joystick (appears wherever you press
+     within the right-side zone) + sword + fire on the right,
      jump with the merged roll/down button on the left -->
 <div id="touch">
-  <div id="stick"><div id="knob"></div></div>
+  <div id="stickZone"></div>
+  <div id="stickBase"></div>
+  <div id="knob"></div>
   <div class="tbtn sword" id="btnA">⚔</div>
   <div class="tbtn fire" id="btnF">🔥</div>
   <div class="tbtn jump" id="btnJ">⬆</div>

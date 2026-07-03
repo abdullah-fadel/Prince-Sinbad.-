@@ -31,30 +31,47 @@ function bindT(id, k){
 }
 bindT('btnJ','J'); bindT('btnF','F'); bindT('btnD','D'); bindT('btnA','A');
 
-/* virtual joystick (right side) — drag the knob left/right to run.
-   The knob follows the thumb (clamped to the pad); a small dead zone
-   in the middle stops accidental drift. */
-const stickEl = document.getElementById('stick'), knobEl = document.getElementById('knob');
-const STICK_DEAD = 13;
-function stickUpdate(e){
-  const r = stickEl.getBoundingClientRect();
-  let dx = e.clientX - (r.left + r.width / 2);
-  let dy = e.clientY - (r.top + r.height / 2);
-  const max = r.width / 2 - 24, len = Math.hypot(dx, dy) || 1;
+/* free-floating virtual joystick (right side) — rather than sitting in
+   one fixed spot, it spawns right under the thumb wherever the player
+   first presses inside the zone, then drags freely from there. Size
+   and drag range come from the --stick-* CSS variables so the whole
+   thing can be resized in one place without touching this logic. */
+const stickZone = document.getElementById('stickZone');
+const stickBase = document.getElementById('stickBase'), knobEl = document.getElementById('knob');
+const stickVar = n => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n)) || 0;
+const STICK_DEAD = 14;
+let stickCX = 0, stickCY = 0, stickOn = false;
+
+function stickShow(x, y){
+  const half = stickVar('--stick-base') / 2 + 8;
+  stickCX = Math.max(half, Math.min(x, innerWidth - half));
+  stickCY = Math.max(half, Math.min(y, innerHeight - half));
+  stickBase.style.left = stickCX + 'px'; stickBase.style.top = stickCY + 'px';
+  knobEl.style.left = stickCX + 'px'; knobEl.style.top = stickCY + 'px';
+  knobEl.style.transform = 'translate(-50%, -50%)';
+  stickBase.classList.add('on'); knobEl.classList.add('on');
+  stickOn = true;
+}
+function stickMove(x, y){
+  const max = stickVar('--stick-max');
+  let dx = x - stickCX, dy = y - stickCY;
+  const len = Math.hypot(dx, dy) || 1;
   if (len > max){ dx = dx / len * max; dy = dy / len * max; }
   knobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
   T.L = dx < -STICK_DEAD; T.R = dx > STICK_DEAD;
 }
-function stickReset(){
-  T.L = T.R = false;
-  knobEl.style.transform = 'translate(-50%, -50%)';
+function stickHide(){
+  stickOn = false; T.L = T.R = false;
+  stickBase.classList.remove('on'); knobEl.classList.remove('on');
 }
-stickEl.addEventListener('pointerdown', e => { e.preventDefault(); stickEl.setPointerCapture(e.pointerId); stickUpdate(e); ac(); });
-stickEl.addEventListener('pointermove', e => { if (stickEl.hasPointerCapture(e.pointerId)) stickUpdate(e); });
-stickEl.addEventListener('pointerup', stickReset);
-stickEl.addEventListener('pointercancel', stickReset);
-stickEl.addEventListener('contextmenu', e => e.preventDefault());
-addEventListener('blur', stickReset);
+stickZone.addEventListener('pointerdown', e => {
+  e.preventDefault(); stickZone.setPointerCapture(e.pointerId); stickShow(e.clientX, e.clientY); ac();
+});
+stickZone.addEventListener('pointermove', e => { if (stickOn && stickZone.hasPointerCapture(e.pointerId)) stickMove(e.clientX, e.clientY); });
+stickZone.addEventListener('pointerup', stickHide);
+stickZone.addEventListener('pointercancel', stickHide);
+stickZone.addEventListener('contextmenu', e => e.preventDefault());
+addEventListener('blur', stickHide);
 
 const inL    = () => keys['ArrowLeft']  || keys['KeyA'] || T.L;
 const inR    = () => keys['ArrowRight'] || keys['KeyD'] || T.R;
