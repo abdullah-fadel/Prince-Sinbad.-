@@ -30,10 +30,18 @@ const DEFAULT_LAYOUT = {
 };
 
 function loadControlLayout(){
-  try{ const s = JSON.parse(localStorage.getItem(CONTROLS_KEY)); return (s && s.v === 1) ? s : null; }
-  catch(e){ return null; }
+  try{
+    const raw = localStorage.getItem(CONTROLS_KEY);
+    console.log('[controls] load: raw localStorage.' + CONTROLS_KEY + ' =', raw);
+    const s = JSON.parse(raw);
+    return (s && s.v === 1) ? s : null;
+  }
+  catch(e){ console.log('[controls] load: parse failed', e); return null; }
 }
-function saveControlLayout(l){ localStorage.setItem(CONTROLS_KEY, JSON.stringify(l)); }
+function saveControlLayout(l){
+  localStorage.setItem(CONTROLS_KEY, JSON.stringify(l));
+  console.log('[controls] save: wrote localStorage.' + CONTROLS_KEY + ' =', localStorage.getItem(CONTROLS_KEY));
+}
 
 /* applies a layout to the REAL gameplay controls. Uses plain left/top
    (position minus half the current size) rather than a transform, so

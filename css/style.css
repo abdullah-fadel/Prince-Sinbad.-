@@ -84,8 +84,18 @@ body.playing #pauseBtn{display:block;}
    proxy positions map 1:1 to the same x/y fractions applyControlLayout()
    uses on the real full-screen buttons, so this stays simple while the
    real buttons (behind the overlay) preview live. */
-#ctlStage{position:relative;width:min(90vw,600px);aspect-ratio:16/9;margin:14px auto;
-  border:2px dashed rgba(212,175,55,.5);border-radius:12px;background:rgba(0,0,0,.15);touch-action:none;}
+/* #controlsOv's content (stage + 5 sliders + 2 buttons) is taller than
+   many real phones' landscape viewport height, so unlike every other
+   .overlay it must scroll instead of center-and-clip — otherwise the
+   Done button ends up below the visible screen and can never be
+   tapped, so nothing ever gets saved. See also: #ctlStage's width is
+   capped by a vh-based term below to shrink the whole editor on short
+   viewports and minimize how much scrolling is ever needed. */
+#controlsOv{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  touch-action:pan-y;padding-top:14px;padding-bottom:24px;}
+#ctlStage{position:relative;width:min(90vw,600px,calc(36vh * 16 / 9));aspect-ratio:16/9;margin:8px auto;
+  border:2px dashed rgba(212,175,55,.5);border-radius:12px;background:rgba(0,0,0,.15);touch-action:none;
+  flex-shrink:0;}
 .ctlProxy{position:absolute;width:15%;aspect-ratio:1;transform:translate(-50%,-50%);
   border-radius:50%;background:rgba(212,175,55,.35);border:2px solid rgba(212,175,55,.9);
   display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gold);
@@ -95,8 +105,8 @@ body.playing #pauseBtn{display:block;}
   border-radius:8px;cursor:move;touch-action:none;}
 .ctlHandle{position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;border-radius:50%;
   background:rgba(120,214,150,.95);border:2px solid #fff;cursor:nwse-resize;touch-action:none;}
-#ctlSliders{display:flex;flex-direction:column;gap:6px;margin:8px 0 4px;width:min(90vw,420px);}
-#ctlSliders label{display:flex;align-items:center;gap:10px;color:var(--cream);font-size:15px;}
+#ctlSliders{display:flex;flex-direction:column;gap:4px;margin:6px 0 4px;width:min(90vw,420px);flex-shrink:0;}
+#ctlSliders label{display:flex;align-items:center;gap:10px;color:var(--cream);font-size:14px;}
 #ctlSliders input[type=range]{flex:1;}
 
 /* ---------- rotate-device overlay ---------- */
