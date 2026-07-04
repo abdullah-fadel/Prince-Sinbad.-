@@ -79,6 +79,26 @@ body.playing #pauseBtn{display:block;}
   padding:10px 22px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;
   box-shadow:0 4px 0 #7a5e14,0 8px 18px rgba(0,0,0,.4);}
 
+/* ---------- control customization ---------- */
+/* a compact bird's-eye "phone screen" the user drags proxies around in —
+   proxy positions map 1:1 to the same x/y fractions applyControlLayout()
+   uses on the real full-screen buttons, so this stays simple while the
+   real buttons (behind the overlay) preview live. */
+#ctlStage{position:relative;width:min(90vw,600px);aspect-ratio:16/9;margin:14px auto;
+  border:2px dashed rgba(212,175,55,.5);border-radius:12px;background:rgba(0,0,0,.15);touch-action:none;}
+.ctlProxy{position:absolute;width:15%;aspect-ratio:1;transform:translate(-50%,-50%);
+  border-radius:50%;background:rgba(212,175,55,.35);border:2px solid rgba(212,175,55,.9);
+  display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gold);
+  cursor:grab;user-select:none;touch-action:none;}
+.ctlProxy:active{cursor:grabbing;}
+.ctlZoneProxy{position:absolute;border:2px solid rgba(120,214,150,.8);background:rgba(120,214,150,.12);
+  border-radius:8px;cursor:move;touch-action:none;}
+.ctlHandle{position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;border-radius:50%;
+  background:rgba(120,214,150,.95);border:2px solid #fff;cursor:nwse-resize;touch-action:none;}
+#ctlSliders{display:flex;flex-direction:column;gap:6px;margin:8px 0 4px;width:min(90vw,420px);}
+#ctlSliders label{display:flex;align-items:center;gap:10px;color:var(--cream);font-size:15px;}
+#ctlSliders input[type=range]{flex:1;}
+
 /* ---------- rotate-device overlay ---------- */
 #rotateOv{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
   background:#0E2A47;color:var(--cream);font-size:20px;text-align:center;gap:18px;padding:24px;}

@@ -69,7 +69,7 @@ requestAnimationFrame(loop);
 /* ---------------- state / UI wiring ---------------- */
 const $ = id => document.getElementById(id);
 function show(id){
-  ['menuOv', 'pauseOv', 'overOv', 'lvlOv', 'winOv', 'settingsOv'].forEach(o => $(o).classList.add('hidden'));
+  ['menuOv', 'pauseOv', 'overOv', 'lvlOv', 'winOv', 'settingsOv', 'controlsOv'].forEach(o => $(o).classList.add('hidden'));
   if (id) $(id).classList.remove('hidden');
   document.body.classList.toggle('playing', G.state === 'play');
 }
