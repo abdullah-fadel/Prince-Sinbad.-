@@ -50,7 +50,7 @@ function meleeStrike(){
   };
   const cx = P.x + P.w / 2;
   for (const e of G.ents)
-    if ((e.t === 'scorp' || e.t === 'bandit' || e.t === 'wolf' || e.t === 'elite') && !e.dead && aabb(box, e)) hitEnemy(e, 1, cx);
+    if (GROUND_ENEMY_TYPES.has(e.t) && !e.dead && aabb(box, e)) hitEnemy(e, 1, cx);
   const b = G.boss;
   if (b && !b.dead && aabb(box, b)) hitBoss(1);
   ring(cx + P.face * 26, P.y + P.h / 2, 'rgba(255,250,235,.85)', 30);
@@ -203,6 +203,9 @@ function updatePlayer(dt){
   if (P.atkT > 0) P.atkT -= dt;
 
   /* ---- tile interactions ---- */
+  /* negative inset expands the probe box outward — used to detect a
+     destructible wall within reach, not just directly overlapping */
+  G.nearBombWall = overlapTile(P, 'X', -16) || null;
   const cn = overlapTile(P, 'C', 10);
   if (cn){ G.grid[cn.r][cn.c] = ' '; G.coins++; G.score += 100; SFX.coin();
     puff(cn.c * TILE + 24, cn.r * TILE + 24, 6, '#ffd75e', 90, .4);
@@ -229,7 +232,7 @@ function updatePlayer(dt){
       P.hp = Math.min(P.maxHp, P.hp + 1); // checkpoints heal a heart
       SFX.check();
       puff(kc.c * TILE + 24, kc.r * TILE, 10, '#7be07b', 100, .6);
-      popText(kc.c * TILE + 24, kc.r * TILE - 12, 'نقطة حفظ ✓', '#7be07b');
+      popText(kc.c * TILE + 24, kc.r * TILE - 12, t('checkpoint.saved'), '#7be07b');
     }
   }
   if (overlapTile(P, '^', 14)) hurtPlayer(1);
@@ -245,7 +248,16 @@ function updatePlayer(dt){
     if (G.elite && !G.elite.dead && G.elite.hp > 0){
       if (G.eliteWarnT <= 0){
         G.eliteWarnT = 1.4; SFX.hit();
-        popText(P.x + P.w / 2, P.y - 12, 'اهزم ' + (G.elite.name || 'الحارس') + ' أولاً!', '#ff7b7b');
+        popText(P.x + P.w / 2, P.y - 12, t('warn.defeatFirst', { name: LT(G.elite.name) }), '#ff7b7b');
+      }
+    } else if (G.boss && !G.boss.dead){
+      /* a mid-roster boss (kind 'warlord') gates the normal door exactly
+         like the elite guard does — the final chief never reaches here
+         since its level always sets L.boss and skips this branch entirely */
+      if (G.eliteWarnT <= 0){
+        G.eliteWarnT = 1.4; SFX.hit();
+        const name = LEVELS[G.lvl].bossName ? LT(LEVELS[G.lvl].bossName) : t('boss.chiefName');
+        popText(P.x + P.w / 2, P.y - 12, t('warn.defeatFirst', { name }), '#ff7b7b');
       }
     } else levelComplete();
   }

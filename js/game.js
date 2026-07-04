@@ -11,7 +11,7 @@ let last = 0;
 function loop(ts){
   requestAnimationFrame(loop);
   const dt = Math.min(.033, (ts - last) / 1000 || .016); last = ts; G.dt = dt;
-  if (G.state !== 'play') return;
+  if (G.state !== 'play'){ $('btnBomb').classList.add('hidden'); return; }
   ctx.setTransform(viewScale, 0, 0, viewScale, 0, 0);
 
   G.time += dt;
@@ -22,11 +22,17 @@ function loop(ts){
   if (G.hitstop > 0){ G.hitstop -= dt; }
   else {
     updatePlayer(dt); updateDeath(dt);
-    updateEnemies(dt); updateBoss(dt); updateFireballs(dt);
+    updateEnemies(dt); updateBoss(dt); updateFireballs(dt); updateKnives(dt);
     updateParts(dt);
   }
   updateCamera(dt);
   updateMotes(dt);
+
+  /* contextual "blow up wall / get a bomb" button */
+  if (G.nearBombWall){
+    $('btnBomb').classList.remove('hidden');
+    $('btnBomb').textContent = P.bombs > 0 ? t('bomb.detonate') : t('bomb.getBomb');
+  } else $('btnBomb').classList.add('hidden');
 
   /* victory trigger: reached the princess */
   if (P.winWalk && G.princess && !G.won &&
@@ -52,8 +58,9 @@ function loop(ts){
     else if (e.t === 'bandit') drawBandit(e);
     else if (e.t === 'wolf') drawWolf(e);
     else if (e.t === 'elite') drawElite(e);
+    else if (e.t === 'thrower') drawThrower(e);
   }
-  drawBoss(); drawPrincess(dt); drawFireballs(); drawParts(); drawHero();
+  drawBoss(); drawPrincess(dt); drawFireballs(); drawKnives(); drawParts(); drawHero();
   ctx.restore();
   drawVignette();
   drawHUD();
@@ -63,7 +70,7 @@ requestAnimationFrame(loop);
 /* ---------------- state / UI wiring ---------------- */
 const $ = id => document.getElementById(id);
 function show(id){
-  ['menuOv', 'pauseOv', 'overOv', 'lvlOv', 'winOv'].forEach(o => $(o).classList.add('hidden'));
+  ['menuOv', 'pauseOv', 'overOv', 'lvlOv', 'winOv', 'settingsOv', 'controlsOv'].forEach(o => $(o).classList.add('hidden'));
   if (id) $(id).classList.remove('hidden');
   document.body.classList.toggle('playing', G.state === 'play');
 }
@@ -75,7 +82,62 @@ function updateBest(){
 }
 function showBest(){
   const best = +(localStorage.getItem(BEST_KEY) || 0);
-  $('bestScore').textContent = best > 0 ? '🏅 أفضل نتيجة: ' + best : '';
+  $('bestScore').textContent = best > 0 ? t('best.score', { v: best }) : '';
+}
+
+/* save/continue — persists progress at level granularity (last level
+   reached, total coins, remaining bombs), not exact mid-level position */
+const SAVE_KEY = 'db_save';
+function loadSave(){
+  try{ const s = JSON.parse(localStorage.getItem(SAVE_KEY)); return (s && s.v === 1) ? s : null; }
+  catch(e){ return null; }
+}
+function writeSave(){
+  localStorage.setItem(SAVE_KEY, JSON.stringify({ v:1, lvl:G.lvl, coins:G.coins, bombs:P.bombs }));
+}
+function clearSave(){ localStorage.removeItem(SAVE_KEY); }
+function refreshMenuButtons(){ $('continueBtn').classList.toggle('hidden', !loadSave()); }
+
+function continueGame(){
+  const s = loadSave();
+  if (!s) return startGame();
+  G.coins = s.coins || 0; G.score = 0; G.dispScore = 0; G.lives = 3;
+  P.fire = 5; P.maxHp = 3; P.bombs = s.bombs ?? 1;
+  G.cpDone = new Set(); G.won = false;
+  loadLevel(Math.min(s.lvl || 0, LEVELS.length - 1));
+  G.state = 'play'; show(null); ac(); startMusic(); goFullscreen();
+}
+
+/* bomb + destructible wall */
+function onBombButtonPress(){
+  if (!G.nearBombWall) return;
+  if (P.bombs > 0) detonateBombWall(G.nearBombWall);
+  else if (!G.adBombUsedThisLevel) requestBombViaAd(() => detonateBombWall(G.nearBombWall));
+}
+function requestBombViaAd(callback){
+  /* placeholder for a future rewarded-ad flow — grants a bomb instantly,
+     limited to once per level, until this is wired to a real ad SDK */
+  G.adBombUsedThisLevel = true;
+  P.bombs++; writeSave();
+  callback();
+}
+function detonateBombWall(cell){
+  P.bombs--; writeSave();
+  clearBombWall(cell.c, cell.r);
+  G.nearBombWall = null;
+  SFX.bomb(); G.shake = Math.max(G.shake, .5);
+  puff(cell.c * TILE + 24, cell.r * TILE + 24, 24, '#ff9a2e', 220, .6);
+  ring(cell.c * TILE + 24, cell.r * TILE + 24, '#ffb03c', 70);
+}
+$('btnBomb').addEventListener('pointerdown', e => { e.preventDefault(); onBombButtonPress(); });
+
+/* settings overlay — remembers which screen (menu/pause) it was opened from */
+let settingsReturnTo = 'menuOv';
+function openSettings(from){ settingsReturnTo = from; show('settingsOv'); }
+function closeSettings(){ show(settingsReturnTo); }
+function refreshLangBtns(){
+  $('langArBtn').classList.toggle('active', lang === 'ar');
+  $('langEnBtn').classList.toggle('active', lang === 'en');
 }
 
 /* fullscreen + landscape lock on mobile — best effort, failures are fine */
@@ -93,7 +155,7 @@ function goFullscreen(){
 
 function startGame(){
   G.coins = 0; G.score = 0; G.dispScore = 0; G.lives = 3;
-  P.fire = 5; P.maxHp = 3;
+  P.fire = 5; P.maxHp = 3; P.bombs = 1;
   G.cpDone = new Set(); G.won = false;
   loadLevel(0);
   G.state = 'play'; show(null); ac(); startMusic(); goFullscreen();
@@ -103,18 +165,18 @@ function levelComplete(){
   G.state = 'lvl'; G.score += Math.max(0, 1500 - Math.floor(G.time) * 10);
   G.dispScore = G.score;
   $('lvlStats').innerHTML =
-    '💰 العملات: ' + G.coins + '<br>⭐ النقاط: ' + G.score + '<br>⏱ الوقت: ' + Math.floor(G.time) + ' ثانية';
+    t('stats.coins', { v: G.coins }) + '<br>' + t('stats.score', { v: G.score }) + '<br>' + t('stats.time', { v: Math.floor(G.time) });
   show('lvlOv'); SFX.win();
 }
 function showOver(){
   G.state = 'over'; updateBest(); stopMusic();
-  $('overStats').innerHTML = '⭐ النقاط: ' + G.score + '<br>💰 العملات: ' + G.coins;
+  $('overStats').innerHTML = t('stats.score', { v: G.score }) + '<br>' + t('stats.coins', { v: G.coins });
   show('overOv');
 }
 function showWin(){
-  G.state = 'win'; updateBest(); stopMusic();
+  G.state = 'win'; updateBest(); stopMusic(); clearSave();
   $('winStats').innerHTML =
-    '⭐ النقاط النهائية: ' + G.score + '<br>💰 العملات: ' + G.coins + '<br>❤ الأرواح المتبقية: ' + G.lives;
+    t('stats.score', { v: G.score }) + '<br>' + t('stats.coins', { v: G.coins }) + '<br>' + t('stats.livesLeft', { v: G.lives });
   show('winOv');
 }
 function togglePause(){
@@ -129,26 +191,37 @@ document.addEventListener('visibilitychange', () => {
 
 /* sound toggle buttons (menu + pause share state) */
 function refreshSoundBtns(){
-  const label = soundOn ? '🔊 الصوت: يعمل' : '🔇 الصوت: مغلق';
+  const label = soundOn ? t('sound.on') : t('sound.off');
   $('soundBtn').textContent = label;
   $('soundBtn2').textContent = label;
 }
 function toggleSound(){ setSound(!soundOn); refreshSoundBtns(); }
 
 $('startBtn').onclick = startGame;
+$('continueBtn').onclick = continueGame;
 $('retryBtn').onclick = startGame;
 $('againBtn').onclick = startGame;
 $('resumeBtn').onclick = togglePause;
 $('pauseBtn').onclick = togglePause;
 $('soundBtn').onclick = toggleSound;
 $('soundBtn2').onclick = toggleSound;
-const quit = () => { G.state = 'menu'; stopMusic(); updateBest(); showBest(); show('menuOv'); };
+const quit = () => { G.state = 'menu'; stopMusic(); updateBest(); showBest(); refreshMenuButtons(); show('menuOv'); };
 $('quitBtn').onclick = quit;
 $('quitBtn2').onclick = quit;
 $('nextBtn').onclick = () => {
-  if (G.lvl + 1 < LEVELS.length){ loadLevel(G.lvl + 1); G.state = 'play'; show(null); last = performance.now(); }
+  if (G.lvl + 1 < LEVELS.length){ loadLevel(G.lvl + 1); writeSave(); G.state = 'play'; show(null); last = performance.now(); }
   else showWin();
 };
 
+/* settings + language */
+$('settingsBtn').onclick = () => openSettings('menuOv');
+$('settingsBtn2').onclick = () => openSettings('pauseOv');
+$('settingsCloseBtn').onclick = closeSettings;
+$('langArBtn').onclick = () => setLang('ar');
+$('langEnBtn').onclick = () => setLang('en');
+
+applyLang();
 refreshSoundBtns();
+refreshLangBtns();
+refreshMenuButtons();
 showBest();

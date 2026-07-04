@@ -12,7 +12,9 @@ canvas{display:block;image-rendering:auto;background:#000;}
   background:radial-gradient(ellipse at center,rgba(14,42,71,.92),rgba(8,16,28,.97));color:var(--cream);
   z-index:50;text-align:center;padding:20px;
   animation:ovIn .35s ease-out;}
-.overlay.hidden{display:none;}
+.hidden{display:none !important;}
+.mobileOnly{display:none;}
+body.mobile .mobileOnly{display:inline-block;}
 @keyframes ovIn{from{opacity:0;transform:scale(1.04);}to{opacity:1;transform:scale(1);}}
 .title{font-size:clamp(34px,7vw,64px);font-weight:900;color:var(--gold);
   text-shadow:0 4px 18px rgba(212,175,55,.35),0 2px 0 #6b520e;letter-spacing:1px;margin-bottom:8px;
@@ -25,6 +27,7 @@ canvas{display:block;image-rendering:auto;background:#000;}
 .btn:hover{filter:brightness(1.08);}
 .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #7a5e14;}
 .btn.ghost{background:transparent;color:var(--gold);border:2px solid var(--gold);box-shadow:none;padding:10px 30px;font-size:17px;}
+.btn.ghost.active{background:rgba(212,175,55,.28);}
 .btn.small{font-size:15px;padding:8px 22px;}
 .stats{font-size:clamp(16px,3vw,22px);margin:14px 0 6px;line-height:2;}
 .best{color:var(--gold);opacity:.8;font-size:15px;margin-top:10px;}
@@ -69,6 +72,32 @@ body.mobile.playing #touch{display:block;}
   background:rgba(14,42,71,.55);border:1.5px solid rgba(212,175,55,.6);color:var(--gold);font-size:20px;
   cursor:pointer;display:none;}
 body.playing #pauseBtn{display:block;}
+
+/* contextual "blow up wall / get a bomb" button — shown only near an X wall */
+#btnBomb{position:fixed;left:50%;bottom:calc(160px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  z-index:35;background:linear-gradient(180deg,#e7c455,#b8912a);color:#241a04;border:none;border-radius:14px;
+  padding:10px 22px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;
+  box-shadow:0 4px 0 #7a5e14,0 8px 18px rgba(0,0,0,.4);}
+
+/* ---------- control customization ---------- */
+/* a compact bird's-eye "phone screen" the user drags proxies around in —
+   proxy positions map 1:1 to the same x/y fractions applyControlLayout()
+   uses on the real full-screen buttons, so this stays simple while the
+   real buttons (behind the overlay) preview live. */
+#ctlStage{position:relative;width:min(90vw,600px);aspect-ratio:16/9;margin:14px auto;
+  border:2px dashed rgba(212,175,55,.5);border-radius:12px;background:rgba(0,0,0,.15);touch-action:none;}
+.ctlProxy{position:absolute;width:15%;aspect-ratio:1;transform:translate(-50%,-50%);
+  border-radius:50%;background:rgba(212,175,55,.35);border:2px solid rgba(212,175,55,.9);
+  display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gold);
+  cursor:grab;user-select:none;touch-action:none;}
+.ctlProxy:active{cursor:grabbing;}
+.ctlZoneProxy{position:absolute;border:2px solid rgba(120,214,150,.8);background:rgba(120,214,150,.12);
+  border-radius:8px;cursor:move;touch-action:none;}
+.ctlHandle{position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;border-radius:50%;
+  background:rgba(120,214,150,.95);border:2px solid #fff;cursor:nwse-resize;touch-action:none;}
+#ctlSliders{display:flex;flex-direction:column;gap:6px;margin:8px 0 4px;width:min(90vw,420px);}
+#ctlSliders label{display:flex;align-items:center;gap:10px;color:var(--cream);font-size:15px;}
+#ctlSliders input[type=range]{flex:1;}
 
 /* ---------- rotate-device overlay ---------- */
 #rotateOv{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;

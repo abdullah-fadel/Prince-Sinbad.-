@@ -11,7 +11,8 @@
 <body>
 <div id="wrap"><canvas id="cv"></canvas></div>
 
-<button id="pauseBtn" aria-label="إيقاف مؤقت">⏸</button>
+<button id="pauseBtn" aria-label="إيقاف مؤقت" data-i18n-aria="pauseBtn.aria">⏸</button>
+<button id="btnBomb" class="hidden"></button>
 
 <!-- Touch controls: a free-floating joystick (appears wherever you press
      within the right-side zone) + sword + fire on the right,
@@ -29,56 +30,93 @@
 <!-- Rotate-your-phone overlay (portrait) -->
 <div id="rotateOv">
   <div class="rotIcon">📱↻</div>
-  <div>أدر هاتفك للوضع الأفقي للعب</div>
+  <div data-i18n="rotate.text">أدر هاتفك للوضع الأفقي للعب</div>
 </div>
 
 <div class="overlay" id="menuOv">
-  <div class="title">سيف الصحراء</div>
-  <div class="subtitle">مغامرة عربية — سنباد ينقذ الأميرة من زعيم اللصوص</div>
-  <div class="story">
+  <div class="title" data-i18n="menu.title">سيف الصحراء</div>
+  <div class="subtitle" data-i18n="menu.subtitle">مغامرة عربية — سنباد ينقذ الأميرة من زعيم اللصوص</div>
+  <div class="story" data-i18n-html="menu.story">
     هجم زعيم اللصوص على بغداد واختطف الأميرة إلى قلعته البعيدة!<br>
     انطلق يا سنباد عبر الواحات والكهوف والأسواق… لوّح بسيفك، أطلق كرات النار،
     وتدحرج لتتفادى الضربات حتى تحرّرها.
   </div>
-  <button class="btn" id="startBtn">ابدأ المغامرة</button>
+  <button class="btn" id="startBtn" data-i18n="menu.start">ابدأ المغامرة</button>
+  <button class="btn ghost hidden" id="continueBtn" data-i18n="menu.continue">متابعة</button>
   <button class="btn ghost small" id="soundBtn">🔊 الصوت: يعمل</button>
+  <button class="btn ghost small" id="settingsBtn" data-i18n="menu.settings">⚙ الإعدادات</button>
   <div class="best" id="bestScore"></div>
-  <div class="hint">
+  <div class="hint" data-i18n-html="menu.hint">
     الحاسبة: الأسهم أو A/D للحركة • مسافة/W للقفز (مزدوجة) • J أو X للسيف • K أو Z لكرة النار • Shift أو C للدحرجة • S/▼ للنزول<br>
     الموبايل: عصا التحكم على اليمين للحركة • السيف ⚔ وكرة النار 🔥 بجانبها • اقفز ⬆ يسارًا وتحته زر 💨▼ للدحرجة والنزول
   </div>
 </div>
 
 <div class="overlay hidden" id="pauseOv">
-  <div class="title" style="font-size:42px;">إيقاف مؤقت</div>
-  <button class="btn" id="resumeBtn">استمرار</button>
+  <div class="title" style="font-size:42px;" data-i18n="pause.title">إيقاف مؤقت</div>
+  <button class="btn" id="resumeBtn" data-i18n="pause.resume">استمرار</button>
   <button class="btn ghost" id="soundBtn2">🔊 الصوت: يعمل</button>
-  <button class="btn ghost" id="quitBtn">القائمة الرئيسية</button>
+  <button class="btn ghost" id="settingsBtn2" data-i18n="menu.settings">⚙ الإعدادات</button>
+  <button class="btn ghost" id="quitBtn" data-i18n="pause.quit">القائمة الرئيسية</button>
 </div>
 
 <div class="overlay hidden" id="overOv">
-  <div class="title" style="font-size:46px;color:#e05a4e;">انتهت اللعبة</div>
+  <div class="title" style="font-size:46px;color:#e05a4e;" data-i18n="over.title">انتهت اللعبة</div>
   <div class="stats" id="overStats"></div>
-  <button class="btn" id="retryBtn">حاول مرة ثانية</button>
-  <button class="btn ghost" id="quitBtn2">القائمة الرئيسية</button>
+  <button class="btn" id="retryBtn" data-i18n="over.retry">حاول مرة ثانية</button>
+  <button class="btn ghost" id="quitBtn2" data-i18n="pause.quit">القائمة الرئيسية</button>
 </div>
 
 <div class="overlay hidden" id="lvlOv">
-  <div class="title" style="font-size:44px;">🏆 اكتملت المرحلة!</div>
+  <div class="title" style="font-size:44px;" data-i18n="lvl.complete">🏆 اكتملت المرحلة!</div>
   <div class="stats" id="lvlStats"></div>
-  <button class="btn" id="nextBtn">المرحلة التالية</button>
+  <button class="btn" id="nextBtn" data-i18n="lvl.next">المرحلة التالية</button>
 </div>
 
 <div class="overlay hidden" id="winOv">
-  <div class="title">👑 النصر!</div>
-  <div class="subtitle">هزمت زعيم اللصوص وأنقذت الأميرة… عاد السلام إلى المملكة</div>
+  <div class="title" data-i18n="win.title">👑 النصر!</div>
+  <div class="subtitle" data-i18n="win.subtitle">هزمت زعيم اللصوص وأنقذت الأميرة… عاد السلام إلى المملكة</div>
   <div class="stats" id="winStats"></div>
-  <button class="btn" id="againBtn">العب من جديد</button>
+  <button class="btn" id="againBtn" data-i18n="win.again">العب من جديد</button>
 </div>
 
+<div class="overlay hidden" id="settingsOv">
+  <div class="title" style="font-size:40px;" data-i18n="settings.title">الإعدادات</div>
+  <div class="subtitle" data-i18n="settings.language">اللغة</div>
+  <div>
+    <button class="btn ghost" id="langArBtn">العربية</button>
+    <button class="btn ghost" id="langEnBtn">English</button>
+  </div>
+  <button class="btn ghost mobileOnly" id="customizeBtn" data-i18n="settings.customize">تخصيص أزرار التحكم</button>
+  <button class="btn" id="settingsCloseBtn" data-i18n="settings.close">رجوع</button>
+</div>
+
+<div class="overlay hidden" id="controlsOv">
+  <div class="title" style="font-size:32px;" data-i18n="controls.title">تخصيص أزرار التحكم</div>
+  <div class="subtitle" style="font-size:14px;margin-bottom:6px;" data-i18n="controls.hint">اسحب أي زر أو منطقة العصا لتغيير مكانها، واستخدم الشريط لتكبيرها أو تصغيرها.</div>
+  <div id="ctlStage">
+    <div class="ctlZoneProxy" id="ctlZoneProxy"><div class="ctlHandle" id="ctlZoneHandle"></div></div>
+    <div class="ctlProxy" data-id="btnJ">⬆</div>
+    <div class="ctlProxy" data-id="btnD">💨▼</div>
+    <div class="ctlProxy" data-id="btnA">⚔</div>
+    <div class="ctlProxy" data-id="btnF">🔥</div>
+  </div>
+  <div id="ctlSliders">
+    <label>⬆ <input type="range" class="ctlSizeSlider" data-id="btnJ" min="0.6" max="1.6" step="0.05"></label>
+    <label>💨▼ <input type="range" class="ctlSizeSlider" data-id="btnD" min="0.6" max="1.6" step="0.05"></label>
+    <label>⚔ <input type="range" class="ctlSizeSlider" data-id="btnA" min="0.6" max="1.6" step="0.05"></label>
+    <label>🔥 <input type="range" class="ctlSizeSlider" data-id="btnF" min="0.6" max="1.6" step="0.05"></label>
+    <label>🕹 <input type="range" class="ctlSizeSlider" data-id="stick" min="0.6" max="1.6" step="0.05"></label>
+  </div>
+  <button class="btn ghost" id="controlsResetBtn" data-i18n="controls.reset">إعادة الضبط الافتراضي</button>
+  <button class="btn" id="controlsDoneBtn" data-i18n="controls.done">تم</button>
+</div>
+
+<script src="js/i18n.js"></script>
 <script src="js/config.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/input.js"></script>
+<script src="js/controls-custom.js"></script>
 <script src="js/levels.js"></script>
 <script src="js/core.js"></script>
 <script src="js/particles.js"></script>
