@@ -203,6 +203,9 @@ function updatePlayer(dt){
   if (P.atkT > 0) P.atkT -= dt;
 
   /* ---- tile interactions ---- */
+  /* negative inset expands the probe box outward — used to detect a
+     destructible wall within reach, not just directly overlapping */
+  G.nearBombWall = overlapTile(P, 'X', -16) || null;
   const cn = overlapTile(P, 'C', 10);
   if (cn){ G.grid[cn.r][cn.c] = ' '; G.coins++; G.score += 100; SFX.coin();
     puff(cn.c * TILE + 24, cn.r * TILE + 24, 6, '#ffd75e', 90, .4);

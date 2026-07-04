@@ -166,6 +166,18 @@ function drawTiles(t){
       ctx.fillStyle = '#8a5a34'; rr(x + 2, y + 4, TILE - 4, 14, 5); ctx.fill();
       ctx.fillStyle = '#c99a5e'; rr(x + 2, y + 4, TILE - 4, 6, 4); ctx.fill();
     }
+    else if (ch === 'X'){
+      /* destructible wall — visually distinct from '#' in every biome:
+         dark cracked stone with a warning-red hazard stripe + crack lines */
+      ctx.fillStyle = '#3a2a24'; ctx.fillRect(x, y, TILE, TILE);
+      ctx.fillStyle = '#5a3f34'; ctx.fillRect(x + 3, y + 3, TILE - 6, TILE - 6);
+      ctx.fillStyle = 'rgba(224,72,60,.35)'; ctx.fillRect(x, y, TILE, 6);
+      ctx.strokeStyle = '#e0483c'; ctx.lineWidth = 2.4; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x + 8, y + 10); ctx.lineTo(x + 20, y + 22); ctx.lineTo(x + 13, y + 28); ctx.lineTo(x + 27, y + 40);
+      ctx.moveTo(x + 36, y + 9); ctx.lineTo(x + 27, y + 20); ctx.lineTo(x + 38, y + 33);
+      ctx.stroke(); ctx.lineCap = 'butt';
+    }
     else if (ch === '^'){
       ctx.fillStyle = '#cfd3d8';
       for (let i = 0; i < 3; i++){

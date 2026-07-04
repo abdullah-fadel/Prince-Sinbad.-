@@ -55,6 +55,7 @@ const SFX = {
   boss : () => beep(90, .5, 'sawtooth', .18, -30),
   slash: () => { beep(880, .10, 'sawtooth', .10, -520); setTimeout(() => beep(1500, .06, 'square', .06, -300), 20); }, // steel swish
   roll : () => beep(360, .20, 'sine', .09, -220),                                                                      // soft whoosh
+  bomb : () => { beep(70, .5, 'sawtooth', .2, -40); setTimeout(() => beep(900, .12, 'square', .08, -700), 20); },      // low thump + crack
   win  : () => { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => beep(f, .25, 'triangle', .13), i * 140)); }
 };
 

@@ -17,9 +17,9 @@ function drawHUD(){
   if (P.hp !== lastHp){ heartPulse = .4; lastHp = P.hp; }
   heartPulse = Math.max(0, heartPulse - G.dt);
 
-  /* panel */
-  ctx.fillStyle = 'rgba(14,42,71,.45)'; rr(VW - 232, 10, 222, 64, 14); ctx.fill();
-  ctx.strokeStyle = 'rgba(212,175,55,.7)'; ctx.lineWidth = 1.6; rr(VW - 232, 10, 222, 64, 14); ctx.stroke();
+  /* panel (widened to fit the bomb icon alongside sword/fire/coins) */
+  ctx.fillStyle = 'rgba(14,42,71,.45)'; rr(VW - 286, 10, 276, 64, 14); ctx.fill();
+  ctx.strokeStyle = 'rgba(212,175,55,.7)'; ctx.lineWidth = 1.6; rr(VW - 286, 10, 276, 64, 14); ctx.stroke();
   /* hearts */
   for (let i = 0; i < P.maxHp; i++){
     const hx = VW - 36 - i * 26, hy = 26;
@@ -49,6 +49,16 @@ function drawHUD(){
   ctx.lineCap = 'butt';
   ctx.fillStyle = '#F6F1E7'; ctx.font = 'bold 16px Tahoma'; ctx.textAlign = 'right';
   ctx.fillText('∞', sx - 6, 62);
+  /* bomb — starts with 1, replenished rarely (secret walls / mid-boss reward) */
+  const bx = sx - 54;
+  ctx.globalAlpha = P.bombs > 0 ? 1 : .35;
+  ctx.fillStyle = '#2a2a2a'; ctx.beginPath(); ctx.arc(bx, 58, 8, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#ff8c2e'; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(bx + 4, 51); ctx.lineTo(bx + 8, 45); ctx.stroke(); ctx.lineCap = 'butt';
+  ctx.fillStyle = '#ffd75e'; ctx.beginPath(); ctx.arc(bx + 8, 44, 2, 0, 7); ctx.fill();
+  ctx.fillStyle = '#F6F1E7'; ctx.font = 'bold 17px Tahoma'; ctx.textAlign = 'right';
+  ctx.fillText('× ' + P.bombs, bx - 12, 62);
+  ctx.globalAlpha = 1;
   /* score / lives / time / level name */
   ctx.textAlign = 'left'; ctx.font = 'bold 18px Tahoma';
   ctx.fillStyle = 'rgba(14,42,71,.45)'; rr(64, 10, 190, 36, 10); ctx.fill();

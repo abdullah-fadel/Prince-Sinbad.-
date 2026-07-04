@@ -36,7 +36,7 @@ const P = {
 };
 
 function tileAt(c, r){ if (r < 0 || c < 0 || r >= G.H || c >= G.W) return '#'; return G.grid[r][c]; }
-function solid(ch){ return ch === '#'; }
+function solid(ch){ return ch === '#' || ch === 'X'; }
 function aabb(a, b){ return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; }
 
 /* scan downward from (x, y) to find the ground surface — used for soft shadows */
@@ -59,7 +59,11 @@ function loadLevel(i){
   G.ents = []; G.fireballs = []; G.parts = []; G.motes = [];
   G.boss = null; G.princess = null; G.elite = null; G.eliteWarnT = 0; G.cine = 0; G.banner = 3.8;
   G.deathT = 0; G.winT = 0; G.fade = 0; G.hitstop = 0; G.shake = 0;
+  G.adBombUsedThisLevel = false; G.nearBombWall = null;
   let spawned = false;
+  /* NOTE: 'X' (destructible wall) is deliberately NOT parsed/cleared here —
+     unlike every other special char it must stay a live, solid grid tile
+     until a bomb clears it (see clearBombWall below). Do not "fix" this. */
   for (let r = 0; r < G.H; r++) for (let c = 0; c < G.W; c++){
     const ch = G.grid[r][c], x = c * TILE, y = r * TILE;
     if (ch === 'S'){ G.ents.push(mkScorp(x, y, pal));  G.grid[r][c] = ' '; }
@@ -131,4 +135,17 @@ function overlapTile(o, ch, inset){
   for (let r = y1; r <= y2; r++) for (let c = x1; c <= x2; c++)
     if (tileAt(c, r) === ch) return { c, r };
   return null;
+}
+
+/* depth-limited flood clear so a multi-tile-thick destructible wall
+   fully opens from a single bomb detonated anywhere against it */
+function clearBombWall(c, r){
+  const seen = new Set(); const q = [[c, r]]; let n = 0;
+  while (q.length && n < 40){
+    const [cc, rr] = q.shift(); const key = cc + ',' + rr;
+    if (seen.has(key)) continue; seen.add(key); n++;
+    if (tileAt(cc, rr) !== 'X') continue;
+    G.grid[rr][cc] = ' ';
+    q.push([cc + 1, rr], [cc - 1, rr], [cc, rr + 1], [cc, rr - 1]);
+  }
 }

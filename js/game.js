@@ -11,7 +11,7 @@ let last = 0;
 function loop(ts){
   requestAnimationFrame(loop);
   const dt = Math.min(.033, (ts - last) / 1000 || .016); last = ts; G.dt = dt;
-  if (G.state !== 'play') return;
+  if (G.state !== 'play'){ $('btnBomb').classList.add('hidden'); return; }
   ctx.setTransform(viewScale, 0, 0, viewScale, 0, 0);
 
   G.time += dt;
@@ -27,6 +27,12 @@ function loop(ts){
   }
   updateCamera(dt);
   updateMotes(dt);
+
+  /* contextual "blow up wall / get a bomb" button */
+  if (G.nearBombWall){
+    $('btnBomb').classList.remove('hidden');
+    $('btnBomb').textContent = P.bombs > 0 ? t('bomb.detonate') : t('bomb.getBomb');
+  } else $('btnBomb').classList.add('hidden');
 
   /* victory trigger: reached the princess */
   if (P.winWalk && G.princess && !G.won &&
@@ -100,6 +106,29 @@ function continueGame(){
   loadLevel(Math.min(s.lvl || 0, LEVELS.length - 1));
   G.state = 'play'; show(null); ac(); startMusic(); goFullscreen();
 }
+
+/* bomb + destructible wall */
+function onBombButtonPress(){
+  if (!G.nearBombWall) return;
+  if (P.bombs > 0) detonateBombWall(G.nearBombWall);
+  else if (!G.adBombUsedThisLevel) requestBombViaAd(() => detonateBombWall(G.nearBombWall));
+}
+function requestBombViaAd(callback){
+  /* placeholder for a future rewarded-ad flow — grants a bomb instantly,
+     limited to once per level, until this is wired to a real ad SDK */
+  G.adBombUsedThisLevel = true;
+  P.bombs++; writeSave();
+  callback();
+}
+function detonateBombWall(cell){
+  P.bombs--; writeSave();
+  clearBombWall(cell.c, cell.r);
+  G.nearBombWall = null;
+  SFX.bomb(); G.shake = Math.max(G.shake, .5);
+  puff(cell.c * TILE + 24, cell.r * TILE + 24, 24, '#ff9a2e', 220, .6);
+  ring(cell.c * TILE + 24, cell.r * TILE + 24, '#ffb03c', 70);
+}
+$('btnBomb').addEventListener('pointerdown', e => { e.preventDefault(); onBombButtonPress(); });
 
 /* settings overlay — remembers which screen (menu/pause) it was opened from */
 let settingsReturnTo = 'menuOv';
