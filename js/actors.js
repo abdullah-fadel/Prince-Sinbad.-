@@ -293,9 +293,51 @@ function drawElite(e){
   }
 }
 
+/* ---- thrower: a highwayman with a knife instead of a sword — same
+   silhouette family as the bandit so the roster reads as related
+   factions, but the arm pose telegraphs a throw, not a swing ---- */
+function drawThrower(e){
+  const pal = e.pal || PAL.desert;
+  if (!e.dead) drawShadow(e.x + e.w / 2, e.y + e.h, e.w);
+  ctx.save(); ctx.translate(e.x + e.w / 2, e.y); const d = Math.sign(e.vx) || 1; ctx.scale(d, 1);
+  if (e.dead) ctx.rotate(.9);
+  const run = Math.sin(e.anim * 11) * 5, hurt = e.hurt > 0;
+  /* legs */
+  ctx.fillStyle = pal.robeDark;
+  ctx.fillRect(-8 + run * .4, 38, 7, 14); ctx.fillRect(2 - run * .4, 38, 7, 14);
+  /* body */
+  ctx.fillStyle = hurt ? '#ffb0a0' : pal.robe; rr(-11, 16, 22, 26, 7); ctx.fill();
+  ctx.fillStyle = pal.robeDark; ctx.fillRect(-11, 28, 22, 4);
+  /* throwing arm — cocked back during the windup, released after */
+  ctx.strokeStyle = hurt ? '#ffb0a0' : pal.robe; ctx.lineWidth = 5; ctx.lineCap = 'round';
+  const tw = e.throwWindup > 0 ? -2.0 : Math.sin(e.anim * 11) * .2;
+  ctx.save(); ctx.translate(8, 20); ctx.rotate(tw);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(9, 3); ctx.stroke();
+  ctx.fillStyle = '#cfd3d8'; ctx.beginPath(); ctx.moveTo(9, 1); ctx.lineTo(19, -2); ctx.lineTo(10, 5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  /* head */
+  ctx.fillStyle = '#c78d59'; ctx.beginPath(); ctx.arc(2, 8, 9, 0, 7); ctx.fill();
+  ctx.fillStyle = '#241a12'; ctx.beginPath(); ctx.ellipse(2, 13, 6, 3, 0, 0, 7); ctx.fill(); // beard
+  /* mask + eye */
+  ctx.fillStyle = pal.mask; ctx.fillRect(-6, 3, 16, 5);
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(6, 5.5, 2.4, 0, 7); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(6.8, 5.5, 1.2, 0, 7); ctx.fill();
+  /* turban */
+  ctx.fillStyle = pal.turban; ctx.beginPath(); ctx.arc(2, 3, 9.5, 3.14, 0); ctx.fill();
+  ctx.fillStyle = pal.turbanDark; ctx.fillRect(-8, 1, 20, 4);
+  ctx.lineCap = 'butt'; ctx.restore();
+  /* alert "!" when the thrower spots the player */
+  if (e.alert > 0 && !e.dead){
+    ctx.fillStyle = 'rgba(255,220,80,' + Math.min(1, e.alert * 2) + ')';
+    ctx.font = 'bold 22px Tahoma'; ctx.textAlign = 'center';
+    ctx.fillText('!', e.x + e.w / 2, e.y - 10 - Math.sin(e.alert * 12) * 3);
+  }
+}
+
 /* ---- boss ---- */
 function drawBoss(){
   const b = G.boss; if (!b) return;
+  const isWarlord = b.kind === 'warlord';
   if (!b.dead) drawShadow(b.x + b.w / 2, b.y + b.h, b.w);
   ctx.save(); ctx.translate(b.x + b.w / 2, b.y); ctx.scale(b.face, 1);
   if (b.dead){
@@ -304,32 +346,49 @@ function drawBoss(){
     ctx.globalAlpha = Math.max(0, 1 - b.dead * .5);
   }
   const hurt = b.hurt > 0, wob = Math.sin(b.anim * 3) * 3;
-  const wind = b.windup > 0; // slam telegraph: crouch + red tint
-  const crouch = wind ? Math.sin(b.windup * 30) * 2 + 6 : 0;
+  /* telegraph: the chief crouches before a vertical slam; the warlord
+     crouches before its horizontal dash burst — same visual language,
+     driven by a different timer per kind */
+  const wind = isWarlord ? (b.dashT > 0.9) : (b.windup > 0);
+  const crouch = wind ? Math.sin((isWarlord ? b.dashT : b.windup) * 30) * 2 + 6 : 0;
+
+  /* palette: cool steel-blue/silver warlord vs the chief's maroon/gold */
+  const robeCol    = hurt ? '#ffb0a0' : wind ? (isWarlord ? '#3a4d68' : '#8a1c2c') : (isWarlord ? '#2a3550' : '#6e1622');
+  const trimCol    = isWarlord ? '#c7ccd2' : '#D4AF37';
+  const armCol     = hurt ? '#ffb0a0' : (isWarlord ? '#2a3550' : '#6e1622');
+  const chestCol   = isWarlord ? '#7a8290' : '#8a6a3a';
+  const chestAccent= isWarlord ? '#aeb6c0' : '#b8912a';
+  const turbanCol  = isWarlord ? '#3a4560' : '#8a1f2e';
+  const turban2Col = isWarlord ? '#4a5878' : '#a32a3a';
+  const jewelCol   = isWarlord ? '#7ec8e0' : '#d43a8a';
+  const eyeCol     = wind ? (isWarlord ? '#3ec8f0' : '#e02020') : (isWarlord ? '#1a4a5a' : '#5a1010');
+
   /* legs */
   ctx.fillStyle = '#4a2c1a'; rr(-26, 84, 20, 32, 7); ctx.fill(); rr(8, 84, 20, 32, 7); ctx.fill();
   /* huge robe body */
-  ctx.fillStyle = hurt ? '#ffb0a0' : wind ? '#8a1c2c' : '#6e1622';
+  ctx.fillStyle = robeCol;
   ctx.beginPath(); ctx.moveTo(-40, 30 + wob + crouch); ctx.quadraticCurveTo(0, 4 + wob + crouch, 40, 30 + wob + crouch);
   ctx.lineTo(46, 96); ctx.lineTo(-46, 96); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#D4AF37'; ctx.lineWidth = 3;
+  ctx.strokeStyle = trimCol; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(-34, 36 + wob + crouch); ctx.lineTo(-40, 92);
   ctx.moveTo(34, 36 + wob + crouch); ctx.lineTo(40, 92); ctx.stroke();
   /* armor chest */
-  ctx.fillStyle = '#8a6a3a'; rr(-20, 34 + wob + crouch, 40, 34, 9); ctx.fill();
-  ctx.fillStyle = '#b8912a'; ctx.beginPath(); ctx.arc(0, 50 + wob + crouch, 8, 0, 7); ctx.fill();
+  ctx.fillStyle = chestCol; rr(-20, 34 + wob + crouch, 40, 34, 9); ctx.fill();
+  ctx.fillStyle = chestAccent; ctx.beginPath(); ctx.arc(0, 50 + wob + crouch, 8, 0, 7); ctx.fill();
   /* sword arm */
-  const sl = wind ? -2.2 : b.act === 'slam' ? -1.6 : Math.sin(b.anim * 2.4) * .25 - .4;
+  const sl = wind ? -2.2 : isWarlord
+    ? (b.dashT > 0 && b.dashT <= 0.9 ? -1.8 : Math.sin(b.anim * 2.4) * .25 - .4)
+    : (b.act === 'slam' ? -1.6 : Math.sin(b.anim * 2.4) * .25 - .4);
   ctx.save(); ctx.translate(26, 36 + wob + crouch); ctx.rotate(sl);
-  ctx.strokeStyle = hurt ? '#ffb0a0' : '#6e1622'; ctx.lineWidth = 13; ctx.lineCap = 'round';
+  ctx.strokeStyle = armCol; ctx.lineWidth = 13; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(22, 10); ctx.stroke();
   ctx.fillStyle = '#d8a06b'; ctx.beginPath(); ctx.arc(26, 12, 7, 0, 7); ctx.fill();
   ctx.fillStyle = '#e8ecf0'; ctx.beginPath(); ctx.moveTo(28, 6);
   ctx.quadraticCurveTo(70, -6, 84, -30); ctx.quadraticCurveTo(60, -8, 30, 16); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#8a6a3a'; ctx.fillRect(24, 4, 8, 16);
+  ctx.fillStyle = chestCol; ctx.fillRect(24, 4, 8, 16);
   ctx.restore();
   /* other arm */
-  ctx.strokeStyle = hurt ? '#ffb0a0' : '#6e1622'; ctx.lineWidth = 13; ctx.lineCap = 'round';
+  ctx.strokeStyle = armCol; ctx.lineWidth = 13; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(-26, 38 + wob + crouch); ctx.lineTo(-38, 62 + wob + crouch); ctx.stroke();
   ctx.fillStyle = '#d8a06b'; ctx.beginPath(); ctx.arc(-40, 66 + wob + crouch, 7, 0, 7); ctx.fill();
   /* head */
@@ -338,13 +397,13 @@ function drawBoss(){
   ctx.beginPath(); ctx.ellipse(9, 18 + wob + crouch, 7, 3, 0, 0, 7); ctx.fill(); // moustache
   /* angry eyes */
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(11, 9 + wob + crouch, 4, 4.4, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = wind ? '#e02020' : '#5a1010'; ctx.beginPath(); ctx.arc(12, 10 + wob + crouch, 2.2, 0, 7); ctx.fill();
+  ctx.fillStyle = eyeCol; ctx.beginPath(); ctx.arc(12, 10 + wob + crouch, 2.2, 0, 7); ctx.fill();
   ctx.strokeStyle = '#1c1410'; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(5, 3 + wob + crouch); ctx.lineTo(16, 7 + wob + crouch); ctx.stroke();
   /* grand turban + jewel */
-  ctx.fillStyle = '#8a1f2e'; ctx.beginPath(); ctx.ellipse(3, 2 + wob + crouch, 18, 12, 0, 3.14, 0); ctx.fill();
-  ctx.fillStyle = '#a32a3a'; ctx.beginPath(); ctx.ellipse(3, 0 + wob + crouch, 14, 8, 0, 3.14, 0); ctx.fill();
-  ctx.fillStyle = '#d43a8a'; ctx.beginPath(); ctx.arc(3, -4 + wob + crouch, 3.4, 0, 7); ctx.fill();
+  ctx.fillStyle = turbanCol; ctx.beginPath(); ctx.ellipse(3, 2 + wob + crouch, 18, 12, 0, 3.14, 0); ctx.fill();
+  ctx.fillStyle = turban2Col; ctx.beginPath(); ctx.ellipse(3, 0 + wob + crouch, 14, 8, 0, 3.14, 0); ctx.fill();
+  ctx.fillStyle = jewelCol; ctx.beginPath(); ctx.arc(3, -4 + wob + crouch, 3.4, 0, 7); ctx.fill();
   ctx.lineCap = 'butt'; ctx.restore();
   /* blades */
   for (const bl of b.blades){

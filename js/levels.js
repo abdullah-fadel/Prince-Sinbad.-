@@ -4,19 +4,28 @@
    Legend:
     # solid stone   = one-way platform   ^ spikes   L ladder
     C coin  H heart  P fire pack  T chest  K checkpoint  D exit door
-    S scorpion  B bandit  V wolf  E elite guard (must be defeated to exit)
+    S scorpion  B bandit  V wolf  Y knife-throwing highwayman
+    E elite guard (must be defeated to exit)
     M moving platform  F falling platform
     * lantern  p palm  W water  G boss  R princess
+    X destructible wall (blocks like '#' until bombed — see clearBombWall)
    Rows are padded to the widest row on load, so trailing
    spaces are not significant. Each level also carries a short
    `story` line (shown on the intro banner) and a `biome` tag
-   ('desert'|'forest'|'mountain'|'babylon', default desert) that
-   recolors the sky/skyline/ground and every enemy's palette, so
-   the journey reads as moving through distinct places. A level
-   with an `E` elite guard won't let the player through its exit
-   door until that guard (named by `eliteName`) is defeated.
-   `name`/`story`/`eliteName` are bilingual {ar,en} objects —
-   resolve with LT() at read time, never cache a resolved string.
+   ('desert'|'forest'|'mountain'|'babylon'|'oasis'|'sandyCaves',
+   default desert) that recolors the sky/skyline/ground and every
+   enemy's palette, so the journey reads as moving through distinct
+   places. A level with an `E` elite guard won't let the player
+   through its exit door until that guard (named by `eliteName`) is
+   defeated — likewise a level whose `G` boss is still alive
+   (`bossKind:'warlord'` for the mid-roster boss, default 'chief' for
+   the final boss) blocks the door until it's defeated.
+   `name`/`story`/`eliteName`/`bossName`/`bossTagline` are bilingual
+   {ar,en} objects — resolve with LT() at read time, never cache a
+   resolved string, so a language switch mid-level updates instantly.
+   NOTE: level order is append-only past this point — a save system
+   persists `db_save.lvl` as a plain index, so existing indices must
+   never be reordered again once shipped.
    ========================================================= */
 
 const LEVELS = [
@@ -83,6 +92,42 @@ const LEVELS = [
 "######^^######################   ##  #####   ##   #######^^^####################  ################W##########",
 "##############################WWW##^^#####^^^##WWW###########################################################",
 "##############################################################################################################"
+]},
+{ name:{ar:'ينبوع الواحة النائية',en:'The Remote Oasis Spring'},
+  story:{ar:'اهدأ سنباد عند ينبوع الواحة النائية — لكن قُطّاع طرق يرمون السكاكين من بعيد يحرسون طريقه!',
+         en:'Sinbad rests at the remote oasis spring — but knife-throwing highwaymen guard the way from afar!'},
+  biome:'oasis', rows:[
+"                                                                                                              ",
+"                                          CCC                                                    CCC         ",
+"    H            CC                      =====               C C C                              =====        ",
+"   ===          ====        *                       T                          H                        C    ",
+"                                   ====            ===         M         =====                 P      ===   ",
+"    C   p             C C                                                                 *                  ",
+"       ###          =====      p          Y            ==== ^^ ====        B        p          Y        D   ",
+"  K    ###                    ###   B    ####     K                       #####     ###    K   ####    #### ",
+"###### ####  C C  ##########  ###  ###X#######    ##                  ## ######### ####  ################## ",
+"###### ##################  ###  ######H####    ##      W W       ## ########## ####  ###################",
+"############^^^^^############################    ####WWWWWWWWWW######################^^^^###################",
+"##############################################WWW############################################################"
+]},
+{ name:{ar:'كهوف الرمال الحمراء',en:'The Red Sand Caves'},
+  story:{ar:'يدخل سنباد كهوف الرمال الحمراء ليواجه أمير الحرب — قائد اللصوص الثاني الذي يحرس طريق القافلة!',
+         en:"Sinbad enters the Red Sand Caves to face the Warlord — the second bandit captain guarding the caravan route!"},
+  biome:'sandyCaves', bossKind:'warlord',
+  bossName:{ar:'أمير الحرب',en:'The Warlord'},
+  bossTagline:{ar:'لن تعبر كهوفي حياً!',en:'You shall not pass my caves alive!'}, rows:[
+"                                            ",
+"                                            ",
+"        *           C C C         *         ",
+"   C C                        C C           ",
+"  =====                              =====  ",
+"                                            ",
+"                                            ",
+"   K                              G     D   ",
+"                                            ",
+"############################################",
+"############################################",
+"############################################"
 ]},
 { name:{ar:'غابة الأرز الكثيفة',en:'The Dense Cedar Forest'},
   story:{ar:'دخل سنباد غابة الأرز الكثيفة — الذئاب تتربص بين الأشجار، ولصوص الغابة يحرسون الممرات!',

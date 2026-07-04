@@ -22,7 +22,7 @@ function loop(ts){
   if (G.hitstop > 0){ G.hitstop -= dt; }
   else {
     updatePlayer(dt); updateDeath(dt);
-    updateEnemies(dt); updateBoss(dt); updateFireballs(dt);
+    updateEnemies(dt); updateBoss(dt); updateFireballs(dt); updateKnives(dt);
     updateParts(dt);
   }
   updateCamera(dt);
@@ -58,8 +58,9 @@ function loop(ts){
     else if (e.t === 'bandit') drawBandit(e);
     else if (e.t === 'wolf') drawWolf(e);
     else if (e.t === 'elite') drawElite(e);
+    else if (e.t === 'thrower') drawThrower(e);
   }
-  drawBoss(); drawPrincess(dt); drawFireballs(); drawParts(); drawHero();
+  drawBoss(); drawPrincess(dt); drawFireballs(); drawKnives(); drawParts(); drawHero();
   ctx.restore();
   drawVignette();
   drawHUD();

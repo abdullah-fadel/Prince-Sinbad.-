@@ -6,16 +6,22 @@
    one-way platform support on the Y pass.
    ========================================================= */
 
-/* per-biome enemy color palettes — reused across scorp/bandit/wolf/elite
-   so each new scenario's foes read as a distinct faction at a glance. */
+/* per-biome enemy color palettes — reused across scorp/bandit/wolf/elite/
+   thrower so each new scenario's foes read as a distinct faction at a glance. */
 const PAL = {
-  desert:   { body:'#a24a2e', body2:'#843a22', robe:'#7a5a3a', robeDark:'#3a2c1c', turban:'#a83232', turbanDark:'#8a2626', mask:'#2a2a2a' },
-  forest:   { body:'#3f7d3a', body2:'#2c5c29', robe:'#3a5c2e', robeDark:'#203a1c', turban:'#2f6b3a', turbanDark:'#1f4a28', mask:'#22321c' },
-  mountain: { body:'#7a828c', body2:'#5c636b', robe:'#5a6570', robeDark:'#333a40', turban:'#48566a', turbanDark:'#2f3a48', mask:'#2c3238' },
-  babylon:  { body:'#2aa79f', body2:'#1c7f79', robe:'#b8912a', robeDark:'#8a6a12', turban:'#d4af37', turbanDark:'#8a6a12', mask:'#2a2410' }
+  desert:    { body:'#a24a2e', body2:'#843a22', robe:'#7a5a3a', robeDark:'#3a2c1c', turban:'#a83232', turbanDark:'#8a2626', mask:'#2a2a2a' },
+  forest:    { body:'#3f7d3a', body2:'#2c5c29', robe:'#3a5c2e', robeDark:'#203a1c', turban:'#2f6b3a', turbanDark:'#1f4a28', mask:'#22321c' },
+  mountain:  { body:'#7a828c', body2:'#5c636b', robe:'#5a6570', robeDark:'#333a40', turban:'#48566a', turbanDark:'#2f3a48', mask:'#2c3238' },
+  babylon:   { body:'#2aa79f', body2:'#1c7f79', robe:'#b8912a', robeDark:'#8a6a12', turban:'#d4af37', turbanDark:'#8a6a12', mask:'#2a2410' },
+  oasis:     { body:'#4a9a6a', body2:'#357a4e', robe:'#c9a15a', robeDark:'#8a6a2e', turban:'#2f8a7a', turbanDark:'#1f5a4e', mask:'#20301c' },
+  sandyCaves:{ body:'#9a8064', body2:'#7a6248', robe:'#6a5a48', robeDark:'#3a2f24', turban:'#8a6a4a', turbanDark:'#5a4530', mask:'#2a221a' }
 };
+/* ground-enemy types sharing the same patrol/vision/damage plumbing —
+   check membership here rather than repeating `e.t==='x'||e.t==='y'`
+   conditions across enemies.js/player.js/boss.js */
+const GROUND_ENEMY_TYPES = new Set(['scorp', 'bandit', 'wolf', 'elite', 'thrower']);
 function enemyPoints(t){
-  return t === 'scorp' ? 200 : t === 'wolf' ? 250 : t === 'elite' ? 800 : 300; // bandit/default
+  return t === 'scorp' ? 200 : t === 'wolf' ? 250 : t === 'thrower' ? 350 : t === 'elite' ? 800 : 300; // bandit/default
 }
 
 const G = {
@@ -23,7 +29,7 @@ const G = {
   coins:0, score:0, dispScore:0, lives:3, time:0,
   shake:0, hitstop:0, deathT:0, winT:0, fade:0,
   checkpoint:{x:100,y:100},
-  ents:[], fireballs:[], parts:[], motes:[],
+  ents:[], fireballs:[], knives:[], parts:[], motes:[],
   boss:null, princess:null, elite:null, eliteWarnT:0, cine:0, banner:0,
   cpDone:new Set(), won:false, dt:0.016
 };
@@ -56,7 +62,7 @@ function loadLevel(i){
   const w = Math.max(...L.rows.map(r => r.length));
   G.grid = L.rows.map(r => r.padEnd(w, ' ').split(''));
   G.H = G.grid.length; G.W = w;
-  G.ents = []; G.fireballs = []; G.parts = []; G.motes = [];
+  G.ents = []; G.fireballs = []; G.knives = []; G.parts = []; G.motes = [];
   G.boss = null; G.princess = null; G.elite = null; G.eliteWarnT = 0; G.cine = 0; G.banner = 3.8;
   G.deathT = 0; G.winT = 0; G.fade = 0; G.hitstop = 0; G.shake = 0;
   G.adBombUsedThisLevel = false; G.nearBombWall = null;
@@ -69,10 +75,11 @@ function loadLevel(i){
     if (ch === 'S'){ G.ents.push(mkScorp(x, y, pal));  G.grid[r][c] = ' '; }
     if (ch === 'B'){ G.ents.push(mkBandit(x, y, pal)); G.grid[r][c] = ' '; }
     if (ch === 'V'){ G.ents.push(mkWolf(x, y, pal));   G.grid[r][c] = ' '; }
+    if (ch === 'Y'){ G.ents.push(mkThrower(x, y, pal)); G.grid[r][c] = ' '; }
     if (ch === 'E'){ const el = mkElite(x, y, pal, L.eliteName); G.ents.push(el); G.elite = el; G.grid[r][c] = ' '; }
     if (ch === 'M'){ G.ents.push(mkMover(x, y));  G.grid[r][c] = ' '; }
     if (ch === 'F'){ G.ents.push(mkFaller(x, y)); G.grid[r][c] = ' '; }
-    if (ch === 'G'){ G.boss = mkBoss(x, y);       G.grid[r][c] = ' '; }
+    if (ch === 'G'){ G.boss = mkBoss(x, y, L.bossKind, L.bossName); G.grid[r][c] = ' '; }
     if (ch === 'R'){ G.princess = { x:x, y:y+6, anim:0, freed:false }; G.grid[r][c] = ' '; }
     if (ch === 'K' && !spawned){ G.checkpoint = { x:x+8, y:y-20 }; spawned = true; }
   }
@@ -82,7 +89,7 @@ function loadLevel(i){
   P.swordT = 0; P.swordCool = 0; P.rollT = 0; P.rollCool = 0;
   P.fire = Math.max(P.fire, 5); G.time = 0;
   camSnap();
-  if (L.boss){ G.cine = 2.6; SFX.boss(); }
+  if (G.boss){ G.cine = 2.6; SFX.boss(); } // any boss fight (final or mid-roster) gets the intro cinematic
 }
 
 /* ---------------- entity factories ---------------- */
@@ -95,11 +102,13 @@ function mkWolf(x, y, pal){ return { t:'wolf', x, y:y+26, w:46, h:22, vx:-95, hp
 function mkElite(x, y, pal, name){ return { t:'elite', x, y:y-10, w:44, h:64, vx:-55, hp:6, maxHp:6,
   anim:Math.random()*9, hurt:0, dead:0, lunge:0, windup:0, alert:0, pal: pal || PAL.desert,
   name: name || { ar:STR.ar['elite.default'], en:STR.en['elite.default'] } }; }
+function mkThrower(x, y, pal){ return { t:'thrower', x, y:y-6, w:36, h:54, vx:-60, hp:2,
+  anim:Math.random()*9, hurt:0, dead:0, alert:0, throwWindup:0, cool:0, pal: pal || PAL.desert }; }
 function mkMover(x, y){ return { t:'mover', x, y, w:TILE*2, h:16, ox:x, range:TILE*3, dir:1, spd:70 }; }
 function mkFaller(x, y){ return { t:'faller', x, y, w:TILE, h:14, oy:y, ox:x, timer:-1, vy:0, respawn:0 }; }
-function mkBoss(x, y){ return { t:'boss', x, y:y-58, w:86, h:116, vx:0, vy:0, hp:14, maxHp:14,
+function mkBoss(x, y, kind, name){ return { t:'boss', kind: kind || 'chief', name, x, y:y-58, w:86, h:116, vx:0, vy:0, hp:14, maxHp:14,
   face:-1, anim:0, phase:1, act:'idle', actT:1.5, windup:0, hurt:0, dead:0, onG:true,
-  blades:[], barHp:14 }; }
+  blades:[], barHp:14, dashT:0, dashCool:1.4 }; }
 
 /* ---------------- collision ---------------- */
 function collideX(o){

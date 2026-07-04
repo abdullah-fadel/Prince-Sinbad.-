@@ -9,11 +9,15 @@ function updateBoss(dt){
   const b = G.boss; if (!b) return;
   if (b.dead > 0){
     b.dead += dt;
-    if (b.dead > 1.6 && !G.princess.freed){
+    /* only the final chief's death triggers the princess-rescue sequence —
+       a mid-roster boss (kind 'warlord') just unblocks the level's normal door */
+    if (b.kind === 'chief' && b.dead > 1.6 && !G.princess.freed){
       G.princess.freed = true; P.winWalk = true; SFX.win();
     }
     return;
   }
+  if (b.kind === 'warlord') return updateWarlordBoss(dt, b);
+
   b.anim += dt; b.hurt = Math.max(0, b.hurt - dt);
   b.barHp += (b.hp - b.barHp) * Math.min(1, dt * 3); // trailing HP bar
   if (G.cine > 0) return;
@@ -61,7 +65,13 @@ function updateBoss(dt){
   /* body contact */
   if (!P.dead && aabb(b, P)) hurtPlayer(1, Math.sign(P.x - b.x));
 
-  /* thrown blades + slam shockwaves */
+  updateBossBlades(dt, b);
+}
+
+/* thrown blades + slam/dash shockwaves — shared by every boss kind so a
+   new attack pattern can reuse the identical projectile/hit-resolution
+   mechanics just by pushing different values into b.blades[]. */
+function updateBossBlades(dt, b){
   for (let i = b.blades.length - 1; i >= 0; i--){
     const bl = b.blades[i]; bl.t += dt;
     if (!bl.ground) bl.vy += 900 * dt;
@@ -74,6 +84,43 @@ function updateBoss(dt){
     }
     if (bl.t > 2.4 || bl.y > G.H * TILE) b.blades.splice(i, 1);
   }
+}
+
+/* ---------------- mid-roster boss: the Warlord ----------------
+   A charge/dash attack (telegraphed windup → fast horizontal burst →
+   brief recovery) instead of the chief's vertical slam + thrown
+   blades — in phase 2 it also flings a low ground-hazard wave through
+   the same shared blade array. Reuses the chief's arena-floor
+   convention (row 9) since both boss levels share that layout. */
+function updateWarlordBoss(dt, b){
+  b.anim += dt; b.hurt = Math.max(0, b.hurt - dt);
+  b.barHp += (b.hp - b.barHp) * Math.min(1, dt * 3);
+  if (G.cine > 0) return;
+
+  const p2 = b.hp <= b.maxHp / 2;
+  if (p2) b.phase = 2;
+
+  if (b.dashT > 0){
+    b.dashT -= dt;
+    if (b.dashT <= 0.9 && b.dashT > 0.15) b.x += b.face * (p2 ? 620 : 480) * dt; // the dash burst
+  } else {
+    b.face = Math.sign(P.x - b.x) || b.face;
+    b.dashCool -= dt;
+    if (b.dashCool <= 0){
+      b.dashT = 1.35; b.dashCool = p2 ? 1.6 : 2.2;
+      puff(b.x + b.w / 2, b.y + b.h - 10, 8, '#c9a15a', 110, .4); SFX.boss();
+      if (p2) for (const s of [-1, 1]) b.blades.push({ x:b.x + b.w / 2, y:9 * TILE - 14, vx:s * 260, vy:0, t:0, r:12, ground:true });
+    } else b.x += b.face * 40 * dt; // slow pursuit between dashes
+  }
+
+  b.vy = (b.vy || 0) + 2200 * dt; b.y += b.vy * dt;
+  const gy = 9 * TILE - b.h;
+  if (b.y >= gy){ b.y = gy; b.vy = 0; b.onG = true; }
+  b.x = Math.max(TILE, Math.min(b.x, G.W * TILE - b.w - TILE));
+
+  if (!P.dead && aabb(b, P)) hurtPlayer(1, Math.sign(P.x - b.x));
+
+  updateBossBlades(dt, b);
 }
 
 /* ---------------- shared damage helpers ----------------
@@ -101,6 +148,10 @@ function hitBoss(dmg){
     puff(b.x + b.w / 2, b.y + b.h / 2, 40, '#ffd75e', 260, 1);
     ring(b.x + b.w / 2, b.y + b.h / 2, '#ffd75e', 130);
     popText(b.x + b.w / 2, b.y - 10, '+2000');
+    if (b.kind === 'warlord'){
+      P.bombs++; writeSave();
+      popText(b.x + b.w / 2, b.y - 34, t('boss.bombReward'), '#ffb03c');
+    }
   }
 }
 
@@ -115,7 +166,7 @@ function updateFireballs(dt){
     let dead = f.t > 1.6 || solid(tileAt(c, r));
 
     for (const e of G.ents){
-      if ((e.t === 'scorp' || e.t === 'bandit' || e.t === 'wolf' || e.t === 'elite') && !e.dead &&
+      if (GROUND_ENEMY_TYPES.has(e.t) && !e.dead &&
           Math.abs(f.x - (e.x + e.w / 2)) < e.w / 2 + f.r &&
           Math.abs(f.y - (e.y + e.h / 2)) < e.h / 2 + f.r){
         hitEnemy(e, 1, f.x); dead = true;
@@ -131,6 +182,28 @@ function updateFireballs(dt){
     if (dead){
       if (f.t <= 1.6){ puff(f.x, f.y, 8, '#ff9a2e', 140, .35); ring(f.x, f.y, '#ffb03c', 22); }
       G.fireballs.splice(i, 1);
+    }
+  }
+}
+
+/* ---------------- thrown knives (thrower enemy → player) ----------------
+   Mirrors updateFireballs' structure, but travels enemy-to-player and
+   hurts the player on contact instead of damaging enemies. */
+function updateKnives(dt){
+  for (let i = G.knives.length - 1; i >= 0; i--){
+    const k = G.knives[i]; k.t += dt;
+    k.x += k.vx * dt; k.y += k.vy * dt;
+    puff(k.x, k.y, 1, '#cfd3d8', 30, .22);
+    const c = Math.floor(k.x / TILE), r = Math.floor(k.y / TILE);
+    let dead = k.t > 1.8 || solid(tileAt(c, r));
+    if (!dead && !P.dead && P.inv <= 0 &&
+        Math.abs(k.x - (P.x + P.w / 2)) < k.r + P.w / 2 - 6 &&
+        Math.abs(k.y - (P.y + P.h / 2)) < k.r + P.h / 2 - 8){
+      hurtPlayer(1, Math.sign(P.x - k.x)); dead = true;
+    }
+    if (dead){
+      puff(k.x, k.y, 6, '#cfd3d8', 100, .3);
+      G.knives.splice(i, 1);
     }
   }
 }

@@ -21,7 +21,7 @@ function updateEnemies(dt){
       continue;
     }
 
-    if (e.t === 'scorp' || e.t === 'bandit' || e.t === 'wolf' || e.t === 'elite'){
+    if (GROUND_ENEMY_TYPES.has(e.t)){
       e.anim += dt;
       e.hurt = Math.max(0, e.hurt - dt);
       e.alert = Math.max(0, (e.alert || 0) - dt);
@@ -45,13 +45,31 @@ function updateEnemies(dt){
         }
       }
 
+      /* thrower: same vision envelope as bandit, but a ranged knife toss
+         (telegraphed by throwWindup) instead of a melee lunge */
+      if (e.t === 'thrower'){
+        const dx = P.x - e.x, dy = Math.abs(P.y - e.y);
+        const facing = Math.sign(e.vx) || -1;
+        e.cool = Math.max(0, (e.cool || 0) - dt);
+        if (e.throwWindup > 0){
+          e.throwWindup -= dt;
+          if (e.throwWindup <= 0){
+            G.knives.push({ x:e.x + e.w / 2 + facing * 14, y:e.y + 20, vx:facing * 380, vy:0, t:0, r:9 });
+            SFX.fire(); e.cool = 1.5;
+          }
+        } else if (e.cool <= 0 && !P.dead && dy < 60 && Math.abs(dx) < 260 && Math.sign(dx) === facing){
+          e.throwWindup = .32; e.alert = .8; SFX.hit();
+        }
+      }
+
       /* scorpions pause now and then — less metronomic patrols */
       if (e.t === 'scorp'){
         if (e.pause > 0){ e.pause -= dt; }
         else if (Math.random() < dt * .25){ e.pause = .8 + Math.random(); }
       }
 
-      const winding = (e.t === 'bandit' || e.t === 'elite') && e.windup > 0;
+      const winding = ((e.t === 'bandit' || e.t === 'elite') && e.windup > 0) ||
+                      (e.t === 'thrower' && e.throwWindup > 0);
       const paused = (e.t === 'scorp' && e.pause > 0) || winding;
       const lunging = (e.t === 'bandit' || e.t === 'elite') && e.lunge > 0;
       const spd = paused ? 0 : lunging ? (e.t === 'elite' ? 210 : 170) : Math.abs(e.vx);

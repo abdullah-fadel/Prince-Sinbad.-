@@ -50,7 +50,7 @@ function meleeStrike(){
   };
   const cx = P.x + P.w / 2;
   for (const e of G.ents)
-    if ((e.t === 'scorp' || e.t === 'bandit' || e.t === 'wolf' || e.t === 'elite') && !e.dead && aabb(box, e)) hitEnemy(e, 1, cx);
+    if (GROUND_ENEMY_TYPES.has(e.t) && !e.dead && aabb(box, e)) hitEnemy(e, 1, cx);
   const b = G.boss;
   if (b && !b.dead && aabb(box, b)) hitBoss(1);
   ring(cx + P.face * 26, P.y + P.h / 2, 'rgba(255,250,235,.85)', 30);
@@ -249,6 +249,15 @@ function updatePlayer(dt){
       if (G.eliteWarnT <= 0){
         G.eliteWarnT = 1.4; SFX.hit();
         popText(P.x + P.w / 2, P.y - 12, t('warn.defeatFirst', { name: LT(G.elite.name) }), '#ff7b7b');
+      }
+    } else if (G.boss && !G.boss.dead){
+      /* a mid-roster boss (kind 'warlord') gates the normal door exactly
+         like the elite guard does — the final chief never reaches here
+         since its level always sets L.boss and skips this branch entirely */
+      if (G.eliteWarnT <= 0){
+        G.eliteWarnT = 1.4; SFX.hit();
+        const name = LEVELS[G.lvl].bossName ? LT(LEVELS[G.lvl].bossName) : t('boss.chiefName');
+        popText(P.x + P.w / 2, P.y - 12, t('warn.defeatFirst', { name }), '#ff7b7b');
       }
     } else levelComplete();
   }

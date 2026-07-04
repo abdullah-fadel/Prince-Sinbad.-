@@ -30,10 +30,12 @@ function drawShadow(cx, footY, w){
    sky gradient, mist tint, skyline silhouette and ground color so the
    journey reads as moving through distinct places, not palette swaps. */
 const BIOME_BG = {
-  desert:   { sky:['#f9c979','#f0a668','#d97e5a','#b45f4d'], sun:'#fff3cf', cloud:'255,235,200', sil:'150,84,66',  ground:'96,48,42',  shape:'domes' },
-  forest:   { sky:['#bfe0a8','#8fc47a','#5c9c5e','#3c6b48'], sun:'#eafccb', cloud:'220,240,200', sil:'40,74,46',   ground:'42,58,30',  shape:'trees' },
-  mountain: { sky:['#cfe3f2','#a8c7dd','#7c9cbd','#516583'], sun:'#f2f9ff', cloud:'230,240,250', sil:'70,86,102',  ground:'70,74,84',  shape:'peaks' },
-  babylon:  { sky:['#f5d98a','#e0b463','#b98a4a','#7a5a34'], sun:'#fff0c8', cloud:'240,220,170', sil:'150,110,58', ground:'80,58,30',  shape:'ziggurat' }
+  desert:    { sky:['#f9c979','#f0a668','#d97e5a','#b45f4d'], sun:'#fff3cf', cloud:'255,235,200', sil:'150,84,66',  ground:'96,48,42',  shape:'domes' },
+  forest:    { sky:['#bfe0a8','#8fc47a','#5c9c5e','#3c6b48'], sun:'#eafccb', cloud:'220,240,200', sil:'40,74,46',   ground:'42,58,30',  shape:'trees' },
+  mountain:  { sky:['#cfe3f2','#a8c7dd','#7c9cbd','#516583'], sun:'#f2f9ff', cloud:'230,240,250', sil:'70,86,102',  ground:'70,74,84',  shape:'peaks' },
+  babylon:   { sky:['#f5d98a','#e0b463','#b98a4a','#7a5a34'], sun:'#fff0c8', cloud:'240,220,170', sil:'150,110,58', ground:'80,58,30',  shape:'ziggurat' },
+  oasis:     { sky:['#bfe8d8','#8fd0b0','#5aa889','#3a7860'], sun:'#fff6c8', cloud:'220,245,230', sil:'40,90,66',   ground:'70,88,50',  shape:'oasis' },
+  sandyCaves:{ sky:['#d9c9a8','#b8a480','#8a7458','#5a4a38'], sun:'#f0e0b0', cloud:'220,210,180', sil:'60,50,38',   ground:'60,50,36',  shape:'cavemouth' }
 };
 function biomeOf(){ return (LEVELS[G.lvl] && LEVELS[G.lvl].biome) || 'desert'; }
 
@@ -96,6 +98,8 @@ function drawSkyline(off, base, col, s, shape){
     if (shape === 'trees') drawTreeSilhouette();
     else if (shape === 'peaks') drawPeakSilhouette();
     else if (shape === 'ziggurat') drawZigguratSilhouette();
+    else if (shape === 'oasis') drawOasisSilhouette();
+    else if (shape === 'cavemouth') drawCaveMouthSilhouette();
     else drawDomeSilhouette();
     ctx.restore();
   }
@@ -136,14 +140,45 @@ function drawZigguratSilhouette(){
   ctx.fillRect(470, -160, 10, 160);
   ctx.beginPath(); ctx.moveTo(470, -160); ctx.lineTo(475, -176); ctx.lineTo(480, -160); ctx.closePath(); ctx.fill();
 }
+/* oasis: clustered palm trees over low mud-brick domed huts */
+function drawOasisSilhouette(){
+  const palms = [[30,150],[110,190],[280,165],[420,200]];
+  for (const [x, h] of palms){
+    ctx.fillRect(x - 4, -h, 8, h);
+    for (const a of [-1.2, -0.5, 0.1, 0.7, 1.3]){
+      ctx.beginPath(); ctx.moveTo(x, -h);
+      ctx.quadraticCurveTo(x + Math.cos(a) * 40, -h - 18, x + Math.cos(a) * 58, -h + Math.sin(a) * 26);
+      ctx.quadraticCurveTo(x + Math.cos(a) * 30, -h - 6, x, -h); ctx.fill();
+    }
+  }
+  ctx.fillRect(160, -50, 90, 50); ctx.beginPath(); ctx.arc(205, -50, 30, 3.14, 0); ctx.fill();
+  ctx.fillRect(330, -36, 70, 36); ctx.beginPath(); ctx.arc(365, -36, 24, 3.14, 0); ctx.fill();
+}
+/* sandy caves: a jagged rock arch / cave-mouth with hanging stalactites */
+function drawCaveMouthSilhouette(){
+  ctx.beginPath(); ctx.moveTo(0, 0);
+  ctx.lineTo(20, -90); ctx.lineTo(70, -60); ctx.lineTo(110, -150); ctx.lineTo(160, -70);
+  ctx.lineTo(190, -100);
+  /* cave-mouth opening cut into the rock silhouette */
+  ctx.lineTo(190, -20); ctx.lineTo(230, -34); ctx.lineTo(260, -18); ctx.lineTo(300, -34); ctx.lineTo(340, -20);
+  ctx.lineTo(340, -100);
+  ctx.lineTo(380, -70); ctx.lineTo(430, -160); ctx.lineTo(470, -70); ctx.lineTo(520, -95); ctx.lineTo(560, 0);
+  ctx.closePath(); ctx.fill();
+  /* hanging stalactites at the cave mouth */
+  ctx.beginPath(); ctx.moveTo(196, -34); ctx.lineTo(204, -34); ctx.lineTo(200, -10); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(266, -30); ctx.lineTo(276, -30); ctx.lineTo(271, -4); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(316, -34); ctx.lineTo(326, -34); ctx.lineTo(321, -12); ctx.closePath(); ctx.fill();
+}
 
 /* per-biome tint for solid ground tiles, so each scenario's terrain
    (sand, forest loam, mountain stone, sunbaked brick) reads distinctly */
 const BIOME_TILE = {
-  desert:   { face:'#b98a52', shade:'#a5764a', top:'#d9b077' },
-  forest:   { face:'#6f8f47', shade:'#5c7a3a', top:'#8fae5c' },
-  mountain: { face:'#8f96a0', shade:'#767d88', top:'#c7ccd2' },
-  babylon:  { face:'#c7a55c', shade:'#a8863e', top:'#e8cf8a' }
+  desert:    { face:'#b98a52', shade:'#a5764a', top:'#d9b077' },
+  forest:    { face:'#6f8f47', shade:'#5c7a3a', top:'#8fae5c' },
+  mountain:  { face:'#8f96a0', shade:'#767d88', top:'#c7ccd2' },
+  babylon:   { face:'#c7a55c', shade:'#a8863e', top:'#e8cf8a' },
+  oasis:     { face:'#5c8a5e', shade:'#4a7248', top:'#8fc27a' },
+  sandyCaves:{ face:'#8a7458', shade:'#6e5c46', top:'#a99168' }
 };
 
 /* ---- tiles (culled to camera view) ---- */
@@ -317,6 +352,17 @@ function drawFireballs(){
     ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(f.x, f.y, f.r + 8, 0, 7); ctx.fill();
     ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.t * 10);
     ctx.fillStyle = '#ffdf7e'; ctx.beginPath(); ctx.ellipse(0, 0, f.r * .62, f.r * .45, 0, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ---- thrown knives: small spinning blades (thrower enemy → player) ---- */
+function drawKnives(){
+  for (const k of G.knives){
+    ctx.save(); ctx.translate(k.x, k.y); ctx.rotate(k.t * 16);
+    ctx.fillStyle = '#dfe4ea';
+    ctx.beginPath(); ctx.moveTo(-k.r, 0); ctx.lineTo(k.r, -2.6); ctx.lineTo(k.r, 2.6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#8a6a3a'; ctx.beginPath(); ctx.arc(-k.r + 2, 0, 2, 0, 7); ctx.fill();
     ctx.restore();
   }
 }

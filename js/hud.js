@@ -87,9 +87,10 @@ function drawHUD(){
   const b = G.boss;
   if (b && !b.dead && G.cine <= 0){
     const bw = 380, bx = (VW - bw) / 2, by = VH - 46;
+    const bossName = LEVELS[G.lvl].bossName ? LT(LEVELS[G.lvl].bossName) : t('boss.chiefName');
     ctx.fillStyle = 'rgba(0,0,0,.5)'; rr(bx - 10, by - 26, bw + 20, 52, 12); ctx.fill();
     ctx.fillStyle = '#F6F1E7'; ctx.font = 'bold 15px Tahoma'; ctx.textAlign = 'center';
-    ctx.fillText('☠ ' + t('boss.chiefName'), VW / 2, by - 8);
+    ctx.fillText('☠ ' + bossName, VW / 2, by - 8);
     ctx.fillStyle = '#3a1216'; rr(bx, by, bw, 14, 7); ctx.fill();
     const trail = Math.max(0, b.barHp / b.maxHp);
     if (trail > b.hp / b.maxHp){
@@ -100,13 +101,16 @@ function drawHUD(){
   }
 
   /* boss intro cinematic */
-  if (G.cine > 0){
+  if (G.cine > 0 && G.boss){
+    const L = LEVELS[G.lvl];
+    const bossName = L.bossName ? LT(L.bossName) : t('boss.chiefName');
+    const bossTagline = L.bossTagline ? LT(L.bossTagline) : t('boss.chiefTagline');
     ctx.fillStyle = 'rgba(0,0,0,' + Math.min(.55, G.cine * .4) + ')'; ctx.fillRect(0, 0, VW, VH);
     ctx.fillStyle = '#e0483c'; ctx.font = 'bold 46px Tahoma'; ctx.textAlign = 'center';
     ctx.shadowColor = '#000'; ctx.shadowBlur = 14;
-    ctx.fillText(t('boss.chiefName'), VW / 2, VH / 2 - 16);
+    ctx.fillText(bossName, VW / 2, VH / 2 - 16);
     ctx.fillStyle = '#F6F1E7'; ctx.font = '20px Tahoma';
-    ctx.fillText(t('boss.chiefTagline'), VW / 2, VH / 2 + 26);
+    ctx.fillText(bossTagline, VW / 2, VH / 2 + 26);
     ctx.shadowBlur = 0;
   }
   if (P.winWalk && G.princess && G.princess.freed){
