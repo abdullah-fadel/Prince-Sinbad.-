@@ -78,6 +78,29 @@ function showBest(){
   $('bestScore').textContent = best > 0 ? t('best.score', { v: best }) : '';
 }
 
+/* save/continue — persists progress at level granularity (last level
+   reached, total coins, remaining bombs), not exact mid-level position */
+const SAVE_KEY = 'db_save';
+function loadSave(){
+  try{ const s = JSON.parse(localStorage.getItem(SAVE_KEY)); return (s && s.v === 1) ? s : null; }
+  catch(e){ return null; }
+}
+function writeSave(){
+  localStorage.setItem(SAVE_KEY, JSON.stringify({ v:1, lvl:G.lvl, coins:G.coins, bombs:P.bombs }));
+}
+function clearSave(){ localStorage.removeItem(SAVE_KEY); }
+function refreshMenuButtons(){ $('continueBtn').classList.toggle('hidden', !loadSave()); }
+
+function continueGame(){
+  const s = loadSave();
+  if (!s) return startGame();
+  G.coins = s.coins || 0; G.score = 0; G.dispScore = 0; G.lives = 3;
+  P.fire = 5; P.maxHp = 3; P.bombs = s.bombs ?? 1;
+  G.cpDone = new Set(); G.won = false;
+  loadLevel(Math.min(s.lvl || 0, LEVELS.length - 1));
+  G.state = 'play'; show(null); ac(); startMusic(); goFullscreen();
+}
+
 /* settings overlay — remembers which screen (menu/pause) it was opened from */
 let settingsReturnTo = 'menuOv';
 function openSettings(from){ settingsReturnTo = from; show('settingsOv'); }
@@ -102,7 +125,7 @@ function goFullscreen(){
 
 function startGame(){
   G.coins = 0; G.score = 0; G.dispScore = 0; G.lives = 3;
-  P.fire = 5; P.maxHp = 3;
+  P.fire = 5; P.maxHp = 3; P.bombs = 1;
   G.cpDone = new Set(); G.won = false;
   loadLevel(0);
   G.state = 'play'; show(null); ac(); startMusic(); goFullscreen();
@@ -121,7 +144,7 @@ function showOver(){
   show('overOv');
 }
 function showWin(){
-  G.state = 'win'; updateBest(); stopMusic();
+  G.state = 'win'; updateBest(); stopMusic(); clearSave();
   $('winStats').innerHTML =
     t('stats.score', { v: G.score }) + '<br>' + t('stats.coins', { v: G.coins }) + '<br>' + t('stats.livesLeft', { v: G.lives });
   show('winOv');
@@ -145,17 +168,18 @@ function refreshSoundBtns(){
 function toggleSound(){ setSound(!soundOn); refreshSoundBtns(); }
 
 $('startBtn').onclick = startGame;
+$('continueBtn').onclick = continueGame;
 $('retryBtn').onclick = startGame;
 $('againBtn').onclick = startGame;
 $('resumeBtn').onclick = togglePause;
 $('pauseBtn').onclick = togglePause;
 $('soundBtn').onclick = toggleSound;
 $('soundBtn2').onclick = toggleSound;
-const quit = () => { G.state = 'menu'; stopMusic(); updateBest(); showBest(); show('menuOv'); };
+const quit = () => { G.state = 'menu'; stopMusic(); updateBest(); showBest(); refreshMenuButtons(); show('menuOv'); };
 $('quitBtn').onclick = quit;
 $('quitBtn2').onclick = quit;
 $('nextBtn').onclick = () => {
-  if (G.lvl + 1 < LEVELS.length){ loadLevel(G.lvl + 1); G.state = 'play'; show(null); last = performance.now(); }
+  if (G.lvl + 1 < LEVELS.length){ loadLevel(G.lvl + 1); writeSave(); G.state = 'play'; show(null); last = performance.now(); }
   else showWin();
 };
 
@@ -169,4 +193,5 @@ $('langEnBtn').onclick = () => setLang('en');
 applyLang();
 refreshSoundBtns();
 refreshLangBtns();
+refreshMenuButtons();
 showBest();
