@@ -281,7 +281,7 @@ function drawElite(e){
   if (!e.dead){
     const bw = 56, bx = e.x + e.w / 2 - bw / 2, by = e.y - 26;
     ctx.textAlign = 'center'; ctx.font = 'bold 12px Tahoma';
-    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillText(e.name || 'الحارس', e.x + e.w / 2, by - 4);
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillText(LT(e.name), e.x + e.w / 2, by - 4);
     ctx.fillStyle = 'rgba(0,0,0,.5)'; rr(bx, by, bw, 7, 3); ctx.fill();
     ctx.fillStyle = '#e0483c'; rr(bx, by, bw * Math.max(0, e.hp / e.maxHp), 7, 3); ctx.fill();
   }

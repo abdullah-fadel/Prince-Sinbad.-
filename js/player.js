@@ -229,7 +229,7 @@ function updatePlayer(dt){
       P.hp = Math.min(P.maxHp, P.hp + 1); // checkpoints heal a heart
       SFX.check();
       puff(kc.c * TILE + 24, kc.r * TILE, 10, '#7be07b', 100, .6);
-      popText(kc.c * TILE + 24, kc.r * TILE - 12, 'نقطة حفظ ✓', '#7be07b');
+      popText(kc.c * TILE + 24, kc.r * TILE - 12, t('checkpoint.saved'), '#7be07b');
     }
   }
   if (overlapTile(P, '^', 14)) hurtPlayer(1);
@@ -245,7 +245,7 @@ function updatePlayer(dt){
     if (G.elite && !G.elite.dead && G.elite.hp > 0){
       if (G.eliteWarnT <= 0){
         G.eliteWarnT = 1.4; SFX.hit();
-        popText(P.x + P.w / 2, P.y - 12, 'اهزم ' + (G.elite.name || 'الحارس') + ' أولاً!', '#ff7b7b');
+        popText(P.x + P.w / 2, P.y - 12, t('warn.defeatFirst', { name: LT(G.elite.name) }), '#ff7b7b');
       }
     } else levelComplete();
   }

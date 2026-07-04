@@ -63,7 +63,7 @@ requestAnimationFrame(loop);
 /* ---------------- state / UI wiring ---------------- */
 const $ = id => document.getElementById(id);
 function show(id){
-  ['menuOv', 'pauseOv', 'overOv', 'lvlOv', 'winOv'].forEach(o => $(o).classList.add('hidden'));
+  ['menuOv', 'pauseOv', 'overOv', 'lvlOv', 'winOv', 'settingsOv'].forEach(o => $(o).classList.add('hidden'));
   if (id) $(id).classList.remove('hidden');
   document.body.classList.toggle('playing', G.state === 'play');
 }
@@ -75,7 +75,16 @@ function updateBest(){
 }
 function showBest(){
   const best = +(localStorage.getItem(BEST_KEY) || 0);
-  $('bestScore').textContent = best > 0 ? '🏅 أفضل نتيجة: ' + best : '';
+  $('bestScore').textContent = best > 0 ? t('best.score', { v: best }) : '';
+}
+
+/* settings overlay — remembers which screen (menu/pause) it was opened from */
+let settingsReturnTo = 'menuOv';
+function openSettings(from){ settingsReturnTo = from; show('settingsOv'); }
+function closeSettings(){ show(settingsReturnTo); }
+function refreshLangBtns(){
+  $('langArBtn').classList.toggle('active', lang === 'ar');
+  $('langEnBtn').classList.toggle('active', lang === 'en');
 }
 
 /* fullscreen + landscape lock on mobile — best effort, failures are fine */
@@ -103,18 +112,18 @@ function levelComplete(){
   G.state = 'lvl'; G.score += Math.max(0, 1500 - Math.floor(G.time) * 10);
   G.dispScore = G.score;
   $('lvlStats').innerHTML =
-    '💰 العملات: ' + G.coins + '<br>⭐ النقاط: ' + G.score + '<br>⏱ الوقت: ' + Math.floor(G.time) + ' ثانية';
+    t('stats.coins', { v: G.coins }) + '<br>' + t('stats.score', { v: G.score }) + '<br>' + t('stats.time', { v: Math.floor(G.time) });
   show('lvlOv'); SFX.win();
 }
 function showOver(){
   G.state = 'over'; updateBest(); stopMusic();
-  $('overStats').innerHTML = '⭐ النقاط: ' + G.score + '<br>💰 العملات: ' + G.coins;
+  $('overStats').innerHTML = t('stats.score', { v: G.score }) + '<br>' + t('stats.coins', { v: G.coins });
   show('overOv');
 }
 function showWin(){
   G.state = 'win'; updateBest(); stopMusic();
   $('winStats').innerHTML =
-    '⭐ النقاط النهائية: ' + G.score + '<br>💰 العملات: ' + G.coins + '<br>❤ الأرواح المتبقية: ' + G.lives;
+    t('stats.score', { v: G.score }) + '<br>' + t('stats.coins', { v: G.coins }) + '<br>' + t('stats.livesLeft', { v: G.lives });
   show('winOv');
 }
 function togglePause(){
@@ -129,7 +138,7 @@ document.addEventListener('visibilitychange', () => {
 
 /* sound toggle buttons (menu + pause share state) */
 function refreshSoundBtns(){
-  const label = soundOn ? '🔊 الصوت: يعمل' : '🔇 الصوت: مغلق';
+  const label = soundOn ? t('sound.on') : t('sound.off');
   $('soundBtn').textContent = label;
   $('soundBtn2').textContent = label;
 }
@@ -150,5 +159,14 @@ $('nextBtn').onclick = () => {
   else showWin();
 };
 
+/* settings + language */
+$('settingsBtn').onclick = () => openSettings('menuOv');
+$('settingsBtn2').onclick = () => openSettings('pauseOv');
+$('settingsCloseBtn').onclick = closeSettings;
+$('langArBtn').onclick = () => setLang('ar');
+$('langEnBtn').onclick = () => setLang('en');
+
+applyLang();
 refreshSoundBtns();
+refreshLangBtns();
 showBest();

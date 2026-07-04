@@ -54,18 +54,18 @@ function drawHUD(){
   ctx.fillStyle = 'rgba(14,42,71,.45)'; rr(64, 10, 190, 36, 10); ctx.fill();
   ctx.fillStyle = '#ffd75e'; ctx.fillText(String(Math.round(G.dispScore)).padStart(7, '0'), 76, 35);
   ctx.fillStyle = '#F6F1E7'; ctx.font = '14px Tahoma';
-  ctx.fillText('❤ ' + G.lives + '   ⏱ ' + Math.floor(G.time) + '   ' + LEVELS[G.lvl].name, 76, 60);
+  ctx.fillText('❤ ' + G.lives + '   ⏱ ' + Math.floor(G.time) + '   ' + LT(LEVELS[G.lvl].name), 76, 60);
 
   /* level intro banner (name + one-line story) */
   if (G.banner > 0 && G.cine <= 0){
     const a = Math.min(1, G.banner) * Math.min(1, (3.8 - G.banner) * 3);
-    const story = LEVELS[G.lvl].story;
+    const story = LT(LEVELS[G.lvl].story);
     const bh = story ? 84 : 54, bw = story ? 560 : 320;
     ctx.globalAlpha = Math.max(0, a);
     ctx.fillStyle = 'rgba(14,42,71,.62)'; rr(VW / 2 - bw / 2, 80, bw, bh, 14); ctx.fill();
     ctx.strokeStyle = 'rgba(212,175,55,.8)'; ctx.lineWidth = 1.6; rr(VW / 2 - bw / 2, 80, bw, bh, 14); ctx.stroke();
     ctx.fillStyle = '#ffd75e'; ctx.font = 'bold 26px Tahoma'; ctx.textAlign = 'center';
-    ctx.fillText(LEVELS[G.lvl].name, VW / 2, 114);
+    ctx.fillText(LT(LEVELS[G.lvl].name), VW / 2, 114);
     if (story){
       ctx.fillStyle = '#F6F1E7'; ctx.font = '15px Tahoma';
       ctx.fillText(story, VW / 2, 144);
@@ -79,7 +79,7 @@ function drawHUD(){
     const bw = 380, bx = (VW - bw) / 2, by = VH - 46;
     ctx.fillStyle = 'rgba(0,0,0,.5)'; rr(bx - 10, by - 26, bw + 20, 52, 12); ctx.fill();
     ctx.fillStyle = '#F6F1E7'; ctx.font = 'bold 15px Tahoma'; ctx.textAlign = 'center';
-    ctx.fillText('☠ زعيم اللصوص', VW / 2, by - 8);
+    ctx.fillText('☠ ' + t('boss.chiefName'), VW / 2, by - 8);
     ctx.fillStyle = '#3a1216'; rr(bx, by, bw, 14, 7); ctx.fill();
     const trail = Math.max(0, b.barHp / b.maxHp);
     if (trail > b.hp / b.maxHp){
@@ -94,15 +94,15 @@ function drawHUD(){
     ctx.fillStyle = 'rgba(0,0,0,' + Math.min(.55, G.cine * .4) + ')'; ctx.fillRect(0, 0, VW, VH);
     ctx.fillStyle = '#e0483c'; ctx.font = 'bold 46px Tahoma'; ctx.textAlign = 'center';
     ctx.shadowColor = '#000'; ctx.shadowBlur = 14;
-    ctx.fillText('زعيم اللصوص', VW / 2, VH / 2 - 16);
+    ctx.fillText(t('boss.chiefName'), VW / 2, VH / 2 - 16);
     ctx.fillStyle = '#F6F1E7'; ctx.font = '20px Tahoma';
-    ctx.fillText('المعركة الأخيرة… أنقذ الأميرة!', VW / 2, VH / 2 + 26);
+    ctx.fillText(t('boss.chiefTagline'), VW / 2, VH / 2 + 26);
     ctx.shadowBlur = 0;
   }
   if (P.winWalk && G.princess && G.princess.freed){
     ctx.fillStyle = '#ffd75e'; ctx.font = 'bold 26px Tahoma'; ctx.textAlign = 'center';
     ctx.shadowColor = '#000'; ctx.shadowBlur = 10;
-    ctx.fillText('✨ تحررت الأميرة! ✨', VW / 2, 90); ctx.shadowBlur = 0;
+    ctx.fillText(t('hud.princessFreed'), VW / 2, 90); ctx.shadowBlur = 0;
   }
   ctx.restore();
 }

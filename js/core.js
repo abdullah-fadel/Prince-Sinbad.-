@@ -89,7 +89,8 @@ function mkBandit(x, y, pal){ return { t:'bandit', x, y:y-6, w:36, h:54, vx:-70,
 function mkWolf(x, y, pal){ return { t:'wolf', x, y:y+26, w:46, h:22, vx:-95, hp:1,
   anim:Math.random()*9, hurt:0, dead:0, pal: pal || PAL.forest }; }
 function mkElite(x, y, pal, name){ return { t:'elite', x, y:y-10, w:44, h:64, vx:-55, hp:6, maxHp:6,
-  anim:Math.random()*9, hurt:0, dead:0, lunge:0, windup:0, alert:0, pal: pal || PAL.desert, name: name || 'الحارس' }; }
+  anim:Math.random()*9, hurt:0, dead:0, lunge:0, windup:0, alert:0, pal: pal || PAL.desert,
+  name: name || { ar:STR.ar['elite.default'], en:STR.en['elite.default'] } }; }
 function mkMover(x, y){ return { t:'mover', x, y, w:TILE*2, h:16, ox:x, range:TILE*3, dir:1, spd:70 }; }
 function mkFaller(x, y){ return { t:'faller', x, y, w:TILE, h:14, oy:y, ox:x, timer:-1, vy:0, respawn:0 }; }
 function mkBoss(x, y){ return { t:'boss', x, y:y-58, w:86, h:116, vx:0, vy:0, hp:14, maxHp:14,

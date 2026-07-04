@@ -12,7 +12,9 @@ canvas{display:block;image-rendering:auto;background:#000;}
   background:radial-gradient(ellipse at center,rgba(14,42,71,.92),rgba(8,16,28,.97));color:var(--cream);
   z-index:50;text-align:center;padding:20px;
   animation:ovIn .35s ease-out;}
-.overlay.hidden{display:none;}
+.hidden{display:none !important;}
+.mobileOnly{display:none;}
+body.mobile .mobileOnly{display:inline-block;}
 @keyframes ovIn{from{opacity:0;transform:scale(1.04);}to{opacity:1;transform:scale(1);}}
 .title{font-size:clamp(34px,7vw,64px);font-weight:900;color:var(--gold);
   text-shadow:0 4px 18px rgba(212,175,55,.35),0 2px 0 #6b520e;letter-spacing:1px;margin-bottom:8px;
@@ -25,6 +27,7 @@ canvas{display:block;image-rendering:auto;background:#000;}
 .btn:hover{filter:brightness(1.08);}
 .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #7a5e14;}
 .btn.ghost{background:transparent;color:var(--gold);border:2px solid var(--gold);box-shadow:none;padding:10px 30px;font-size:17px;}
+.btn.ghost.active{background:rgba(212,175,55,.28);}
 .btn.small{font-size:15px;padding:8px 22px;}
 .stats{font-size:clamp(16px,3vw,22px);margin:14px 0 6px;line-height:2;}
 .best{color:var(--gold);opacity:.8;font-size:15px;margin-top:10px;}
