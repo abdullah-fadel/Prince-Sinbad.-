@@ -1,13 +1,17 @@
 # سيف الصحراء — Desert Blade
 
-لعبة منصّات ثنائية الأبعاد بطابع عربي أصيل، واجهتها بالعربية (RTL). كل الرسومات مرسومة
-برمجياً على الـ Canvas (بدون صور خارجية)، وكل الأصوات مولّدة حيّاً بـ Web Audio API مع
-موسيقى خلفية توليدية على مقام الحجاز. مصمَّمة أولاً للهواتف الذكية بالوضع الأفقي
-(تحكم باللمس، ملء الشاشة، دقة عالية، 60 إطاراً بالثانية) وتعمل كاملةً على الحاسوب أيضاً.
+لعبة منصّات ثنائية الأبعاد بطابع عربي أصيل، واجهتها بالعربية (RTL). الخلفيات والبلاطات
+والمؤثرات مرسومة برمجياً على الـ Canvas، بينما الشخصيات الرئيسية (الأمير، الجندي الشرير،
+زعيم الأشرار، الأميرة) صور Sprite مأخوذة من نماذج الشخصيات الأصلية (`img/`)، وكل الأصوات
+مولّدة حيّاً بـ Web Audio API مع موسيقى خلفية توليدية على مقام الحجاز. مصمَّمة أولاً
+للهواتف الذكية بالوضع الأفقي (تحكم باللمس، ملء الشاشة، دقة عالية، 60 إطاراً بالثانية)
+وتعمل كاملةً على الحاسوب أيضاً.
 
-An original 2D Arabian-fantasy platformer (Arabic UI, RTL). Everything is drawn
-procedurally on canvas — no sprites — and every sound is synthesized live with the
-Web Audio API. Built primarily for smartphones in landscape, fully playable on desktop.
+An original 2D Arabian-fantasy platformer (Arabic UI, RTL). Backgrounds, tiles and
+effects are drawn procedurally on canvas; the main characters (hero, evil soldier,
+villain leader, princess) are image sprites rendered from their source character
+models (`img/`). Every sound is synthesized live with the Web Audio API. Built
+primarily for smartphones in landscape, fully playable on desktop.
 
 ## اللعب / Play
 
@@ -38,6 +42,8 @@ secrets, and a chained-princess rescue finale.
 
 - `index.html` — هيكل الصفحة + قوائم البداية/الإيقاف/النتائج
 - `css/style.css` — القوائم وأزرار اللمس وشاشة "أدر هاتفك"
+- `img/` — صور الشخصيات (hero/soldier/leader/princess.png)، بلا هيكل عظمي؛ الحركة
+  محاكاة بتحويل الصورة كاملة (ميل، ارتداد، تمدد/انضغاط، دوران) وليست حركة عظمية
 - `js/` — سكربتات تُحمَّل بالترتيب (بدون أدوات بناء):
   `config` (الكانفس/الدقة/المعايرة) → `audio` (مؤثرات + موسيقى) → `input` → `levels` (خرائط ASCII)
   → `core` (الحالة + التصادم) → `particles` → `camera` → `player` → `enemies` → `boss`
