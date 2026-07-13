@@ -35,32 +35,46 @@ function drawSprite(img, h, tint){
   }
 }
 
-/* ---- HERO: Prince Abdullah ---- */
+/* ---- HERO: Prince Abdullah.
+   The sprite base faces RIGHT, so ctx.scale(P.face,1) flips it to face
+   the travel direction (P.face = +1 right / -1 left). Because there's
+   no skeleton, the "walk", "jump", etc. are faked by pushing the whole
+   rigid image around: a two-beat vertical hop + body sway for running,
+   a lean into jumps/falls, breathing while idle, and a full spin on the
+   dodge roll. ---- */
 function drawHero(){
   if (!P.dead) drawShadow(P.x + P.w / 2, P.y + P.h, P.w);
   const flick = P.inv > 0 && Math.floor(P.inv * 12) % 2 === 0;
   if (flick) return;
   const t = P.anim, run = P.state === 'run';
+  /* running stride phase, tied to how fast the hero actually moves so
+     the feet don't "skate" — faster run = quicker cadence */
+  const cadence = 9 + Math.min(6, Math.abs(P.vx) / 40);
+  const stride = t * cadence;
   ctx.save();
   ctx.translate(P.x + P.w / 2, P.y + P.h);
   ctx.scale(P.face, 1);
-  /* squash & stretch anchored at the feet */
-  const sq = P.squash, st = P.stretch;
-  if (sq > 0 || st > 0) ctx.scale(1 + sq * .5 - st * .3, 1 - sq * .5 + st * .35);
+  /* squash & stretch anchored at the feet (landing / jump take-off) */
+  let sx = 1 + P.squash * .5 - P.stretch * .3, sy = 1 - P.squash * .5 + P.stretch * .35;
+  if (P.state === 'idle'){ const br = Math.sin(t * 2.2) * .02; sx -= br; sy += br; } // breathing
+  if (run){ const b = Math.cos(stride * 2) * .05; sx += b; sy -= b; }                // stride squash
+  ctx.scale(sx, sy);
   if (P.dead) ctx.rotate(Math.sin(t * 3) * .3);
   /* dodge roll: spin the whole body once through the dash */
   if (P.state === 'roll'){
     const spin = (1 - Math.max(0, P.rollT) / ROLL_TIME) * 6.283;
     ctx.translate(0, -55); ctx.rotate(spin); ctx.translate(0, 55);
   }
-  /* no rig to animate, so the whole sprite leans/bobs as one rigid body */
-  const bob = run ? Math.abs(Math.sin(t * 13)) * 3 : P.state === 'idle' ? Math.sin(t * 2.4) : 0;
-  ctx.translate(0, -bob);
-  if (run) ctx.rotate(.09);
-  else if (P.state === 'jump') ctx.rotate(-.07);
-  else if (P.state === 'fall') ctx.rotate(.1);
-  else if (P.swordT > 0 || P.state === 'attack') ctx.rotate(-.14);
-  else if (P.state === 'climb') ctx.translate(0, Math.sin(t * 8) * 3);
+  /* vertical hop + lean per state */
+  let yOff = 0, rot = 0;
+  if (run){ yOff = -Math.abs(Math.sin(stride)) * 6; rot = .12 + Math.sin(stride) * .05; }
+  else if (P.state === 'jump') rot = -.1;
+  else if (P.state === 'fall') rot = .12;
+  else if (P.swordT > 0 || P.state === 'attack') rot = -.16;
+  else if (P.state === 'climb') yOff = Math.sin(t * 8) * 4;
+  else if (P.state === 'idle') yOff = Math.sin(t * 2.2) * 1.5; // gentle idle bob
+  ctx.translate(0, yOff);
+  ctx.rotate(rot);
   drawSprite(SPR.hero, 118);
   /* transient attack flourishes — kept as vector effects since they're
      not part of the character model itself */
@@ -115,6 +129,7 @@ function drawScorp(e){
    by leaning and bobbing the whole rigid sprite. ---- */
 function drawSoldierBody(e, h){
   if (!e.dead) drawShadow(e.x + e.w / 2, e.y + e.h, e.w * (h > 70 ? 1.1 : 1));
+  /* sprite base faces RIGHT; scale(d,1) turns it to the patrol direction */
   const hurt = e.hurt > 0, d = Math.sign(e.vx) || 1;
   ctx.save();
   ctx.translate(e.x + e.w / 2, e.y + e.h);
@@ -122,9 +137,13 @@ function drawSoldierBody(e, h){
   if (e.dead) ctx.rotate(.9);
   else {
     const windup = e.windup > 0 || e.throwWindup > 0, lunge = e.lunge > 0;
-    const tilt = windup ? -.22 : lunge ? .16 : Math.sin(e.anim * 9) * .05;
-    ctx.rotate(tilt);
-    ctx.translate(0, -Math.abs(Math.sin(e.anim * 9)) * 1.6); // marching bob
+    const march = e.anim * 10;
+    let rot, yOff;
+    if (windup){ rot = -.26; yOff = -2; }                              // rear back to strike/throw
+    else if (lunge){ rot = .2; yOff = -Math.abs(Math.sin(march)) * 3; } // committed forward lunge
+    else { rot = Math.sin(march) * .06; yOff = -Math.abs(Math.sin(march)) * 3.4; } // marching hop + sway
+    ctx.translate(0, yOff);
+    ctx.rotate(rot);
   }
   drawSprite(SPR.soldier, h, hurt ? 'rgba(255,150,130,.6)' : null);
   ctx.restore();
@@ -259,19 +278,27 @@ function drawBoss(){
     ctx.fillStyle = jewelCol; ctx.beginPath(); ctx.arc(4, -7 + wob + crouch, 3.2, 0, 7); ctx.fill();
     ctx.lineCap = 'butt';
   } else {
-    /* villain leader: real character-model sprite. A soft red glow at
-       head height telegraphs the windup like the rest of the army. */
-    const hurt = b.hurt > 0, wob = Math.sin(b.anim * 3) * 3;
-    const wind = b.windup > 0;
-    const crouch = wind ? Math.sin(b.windup * 30) * 2 + 6 : 0;
+    /* villain leader: real character-model sprite (base faces right; the
+       boss's ctx.scale(b.face,1) turns it toward the player). Motion is
+       faked on the rigid image — a heavy looming breath while idle, a
+       rear-back + red head-glow telegraph on the windup, and a forward
+       lunge on the slam. */
+    const hurt = b.hurt > 0, breathe = Math.sin(b.anim * 2.2);
+    const wind = b.windup > 0, slam = b.act === 'slam';
     ctx.save();
-    ctx.translate(0, b.h + wob + crouch * .4);
+    ctx.translate(0, b.h);                       // origin at the feet
+    let rot = breathe * .03, rise = breathe * 2; // idle looming sway
+    if (wind){ rot = -.13; rise = -6 - Math.abs(Math.sin(b.windup * 30)) * 4; }
+    else if (slam){ rot = .15; rise = 5; }
+    ctx.translate(0, rise);
+    const s = 1 + breathe * .02;                 // breathing
+    ctx.scale(s, 2 - s);
+    ctx.rotate(rot);
     if (wind){
-      const eg = ctx.createRadialGradient(6, -96, 4, 6, -96, 40);
-      eg.addColorStop(0, 'rgba(255,90,40,.55)'); eg.addColorStop(1, 'rgba(255,90,40,0)');
-      ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(6, -96, 40, 0, 7); ctx.fill();
+      const eg = ctx.createRadialGradient(6, -120, 4, 6, -120, 44);
+      eg.addColorStop(0, 'rgba(255,90,40,.6)'); eg.addColorStop(1, 'rgba(255,90,40,0)');
+      ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(6, -120, 44, 0, 7); ctx.fill();
     }
-    if (b.act === 'slam') ctx.rotate(-.08);
     drawSprite(SPR.leader, 150, hurt ? 'rgba(255,150,130,.6)' : null);
     ctx.restore();
   }
@@ -313,6 +340,10 @@ function drawPrincess(dt){
 
   ctx.save();
   ctx.translate(sway * .3, b);
+  const s = 1 + Math.sin(t * 2.2) * .02;         // gentle breathing
+  ctx.scale(s, 2 - s);
+  ctx.rotate(sway * .01);                          // soft weight-shift sway
+  if (pr.freed) ctx.translate(0, -Math.abs(Math.sin(t * 4)) * 3); // little joyful bob once freed
   drawSprite(SPR.princess, 84);
   ctx.restore();
 
