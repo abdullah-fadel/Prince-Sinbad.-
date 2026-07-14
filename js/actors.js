@@ -11,11 +11,17 @@
    ========================================================= */
 
 function loadSprite(src){ const img = new Image(); img.src = src; return img; }
+const HERO_RUN_FRAMES = 10, HERO_JUMP_FRAMES = 8;
 const SPR = {
   hero: loadSprite('img/hero.png'),
   soldier: loadSprite('img/soldier.png'),
   leader: loadSprite('img/leader.png'),
-  princess: loadSprite('img/princess.png')
+  princess: loadSprite('img/princess.png'),
+  /* real running/jumping animation frames, rendered from the rigged,
+     motion-captured hero model (Jogging / Jump Up clips) rather than
+     faked — the actual legs bend and the cloak flows per frame */
+  heroRun: Array.from({length: HERO_RUN_FRAMES}, (_, i) => loadSprite(`img/hero_run/run_${i}.png`)),
+  heroJump: Array.from({length: HERO_JUMP_FRAMES}, (_, i) => loadSprite(`img/hero_jump/jump_${i}.png`))
 };
 
 /* draws `img` bottom-centered at the current transform's origin, at a
@@ -36,12 +42,12 @@ function drawSprite(img, h, tint){
 }
 
 /* ---- HERO: Prince Abdullah.
-   The sprite base faces RIGHT, so ctx.scale(P.face,1) flips it to face
-   the travel direction (P.face = +1 right / -1 left). Because there's
-   no skeleton, the "walk", "jump", etc. are faked by pushing the whole
-   rigid image around: a two-beat vertical hop + body sway for running,
-   a lean into jumps/falls, breathing while idle, and a full spin on the
-   dodge roll. ---- */
+   Running and jumping/falling use real per-frame poses rendered from
+   the rigged, animated hero model (Jogging / Jump Up clips) — actual
+   bent knees and arm/cloak motion, not a faked transform. The sprite
+   base faces RIGHT, so ctx.scale(P.face,1) flips it to face the travel
+   direction. Idle/attack/roll/climb/dead have no matching animation
+   clip, so those still fake motion by transforming the static pose. ---- */
 function drawHero(){
   if (!P.dead) drawShadow(P.x + P.w / 2, P.y + P.h, P.w);
   const flick = P.inv > 0 && Math.floor(P.inv * 12) % 2 === 0;
@@ -57,7 +63,6 @@ function drawHero(){
   /* squash & stretch anchored at the feet (landing / jump take-off) */
   let sx = 1 + P.squash * .5 - P.stretch * .3, sy = 1 - P.squash * .5 + P.stretch * .35;
   if (P.state === 'idle'){ const br = Math.sin(t * 2.2) * .02; sx -= br; sy += br; } // breathing
-  if (run){ const b = Math.cos(stride * 2) * .05; sx += b; sy -= b; }                // stride squash
   ctx.scale(sx, sy);
   if (P.dead) ctx.rotate(Math.sin(t * 3) * .3);
   /* dodge roll: spin the whole body once through the dash */
@@ -65,17 +70,28 @@ function drawHero(){
     const spin = (1 - Math.max(0, P.rollT) / ROLL_TIME) * 6.283;
     ctx.translate(0, -55); ctx.rotate(spin); ctx.translate(0, 55);
   }
-  /* vertical hop + lean per state */
-  let yOff = 0, rot = 0;
-  if (run){ yOff = -Math.abs(Math.sin(stride)) * 6; rot = .12 + Math.sin(stride) * .05; }
-  else if (P.state === 'jump') rot = -.1;
-  else if (P.state === 'fall') rot = .12;
-  else if (P.swordT > 0 || P.state === 'attack') rot = -.16;
-  else if (P.state === 'climb') yOff = Math.sin(t * 8) * 4;
-  else if (P.state === 'idle') yOff = Math.sin(t * 2.2) * 1.5; // gentle idle bob
-  ctx.translate(0, yOff);
-  ctx.rotate(rot);
-  drawSprite(SPR.hero, 118);
+
+  if (run){
+    const phase = ((stride / (2 * Math.PI)) % 1 + 1) % 1;
+    const frame = SPR.heroRun[Math.floor(phase * HERO_RUN_FRAMES)];
+    drawSprite(frame, 118);
+  } else if (P.state === 'jump' || P.state === 'fall'){
+    /* pick the pose by actual vertical velocity — strong upward thrust
+       reads as the takeoff frame, terminal fall reads as the landing-
+       ready frame, so the pose always matches the physics */
+    const vFrac = Math.min(1, Math.max(0, (P.vy - PHYS.jumpV) / (PHYS.maxFall - PHYS.jumpV)));
+    const frame = SPR.heroJump[Math.min(HERO_JUMP_FRAMES - 1, Math.floor(vFrac * HERO_JUMP_FRAMES))];
+    drawSprite(frame, 118);
+  } else {
+    /* no dedicated clip for this state — fake it on the static pose */
+    let yOff = 0, rot = 0;
+    if (P.swordT > 0 || P.state === 'attack') rot = -.16;
+    else if (P.state === 'climb') yOff = Math.sin(t * 8) * 4;
+    else if (P.state === 'idle') yOff = Math.sin(t * 2.2) * 1.5; // gentle idle bob
+    ctx.translate(0, yOff);
+    ctx.rotate(rot);
+    drawSprite(SPR.hero, 118);
+  }
   /* transient attack flourishes — kept as vector effects since they're
      not part of the character model itself */
   if (P.swordT > 0){
