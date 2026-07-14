@@ -11,17 +11,19 @@
    ========================================================= */
 
 function loadSprite(src){ const img = new Image(); img.src = src; return img; }
-const HERO_RUN_FRAMES = 10, HERO_JUMP_FRAMES = 8;
+const HERO_RUN_FRAMES = 10, HERO_JUMP_FRAMES = 8, HERO_ROLL_FRAMES = 8;
 const SPR = {
   hero: loadSprite('img/hero.png'),
   soldier: loadSprite('img/soldier.png'),
   leader: loadSprite('img/leader.png'),
   princess: loadSprite('img/princess.png'),
-  /* real running/jumping animation frames, rendered from the rigged,
-     motion-captured hero model (Jogging / Jump Up clips) rather than
-     faked — the actual legs bend and the cloak flows per frame */
+  /* real running/jumping/rolling animation frames, rendered from the
+     rigged hero model (Jogging / Jump Up clips, and a hand-keyed tuck
+     pose on the same skeleton for the roll) rather than faked — the
+     actual joints bend and the cloak flows per frame */
   heroRun: Array.from({length: HERO_RUN_FRAMES}, (_, i) => loadSprite(`img/hero_run/run_${i}.png`)),
-  heroJump: Array.from({length: HERO_JUMP_FRAMES}, (_, i) => loadSprite(`img/hero_jump/jump_${i}.png`))
+  heroJump: Array.from({length: HERO_JUMP_FRAMES}, (_, i) => loadSprite(`img/hero_jump/jump_${i}.png`)),
+  heroRoll: Array.from({length: HERO_ROLL_FRAMES}, (_, i) => loadSprite(`img/hero_roll/roll_${i}.png`))
 };
 
 /* draws `img` bottom-centered at the current transform's origin, at a
@@ -65,7 +67,10 @@ function drawHero(){
   if (P.state === 'idle'){ const br = Math.sin(t * 2.2) * .02; sx -= br; sy += br; } // breathing
   ctx.scale(sx, sy);
   if (P.dead) ctx.rotate(Math.sin(t * 3) * .3);
-  /* dodge roll: spin the whole body once through the dash */
+  /* dodge roll: a real tucked-tumble pose (knees drawn up, spine and
+     neck curved, arms pulled in — hand-keyed on the same skeleton used
+     for run/jump, since no source clip covers this state) spun once
+     through the dash for the actual "rolling" motion */
   if (P.state === 'roll'){
     const spin = (1 - Math.max(0, P.rollT) / ROLL_TIME) * 6.283;
     ctx.translate(0, -55); ctx.rotate(spin); ctx.translate(0, 55);
@@ -81,6 +86,10 @@ function drawHero(){
        ready frame, so the pose always matches the physics */
     const vFrac = Math.min(1, Math.max(0, (P.vy - PHYS.jumpV) / (PHYS.maxFall - PHYS.jumpV)));
     const frame = SPR.heroJump[Math.min(HERO_JUMP_FRAMES - 1, Math.floor(vFrac * HERO_JUMP_FRAMES))];
+    drawSprite(frame, 118);
+  } else if (P.state === 'roll'){
+    const prog = 1 - Math.max(0, P.rollT) / ROLL_TIME;
+    const frame = SPR.heroRoll[Math.min(HERO_ROLL_FRAMES - 1, Math.floor(prog * HERO_ROLL_FRAMES))];
     drawSprite(frame, 118);
   } else {
     /* no dedicated clip for this state — fake it on the static pose */
