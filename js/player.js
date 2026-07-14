@@ -245,7 +245,7 @@ function updatePlayer(dt){
   G.eliteWarnT = Math.max(0, G.eliteWarnT - dt);
   const dr = overlapTile(P, 'D', 8);
   if (dr && !LEVELS[G.lvl].boss){
-    if (G.elite && !G.elite.dead && G.elite.hp > 0){
+    if (anyEliteAlive()){
       if (G.eliteWarnT <= 0){
         G.eliteWarnT = 1.4; SFX.hit();
         popText(P.x + P.w / 2, P.y - 12, t('warn.defeatFirst', { name: LT(G.elite.name) }), '#ff7b7b');

@@ -66,19 +66,25 @@ function drawHUD(){
   ctx.fillStyle = '#F6F1E7'; ctx.font = '14px Tahoma';
   ctx.fillText('❤ ' + G.lives + '   ⏱ ' + Math.floor(G.time) + '   ' + LT(LEVELS[G.lvl].name), 76, 60);
 
-  /* level intro banner (name + one-line story) */
+  /* level intro banner (chapter kicker + name + one-line story) */
   if (G.banner > 0 && G.cine <= 0){
     const a = Math.min(1, G.banner) * Math.min(1, (3.8 - G.banner) * 3);
     const story = LT(LEVELS[G.lvl].story);
-    const bh = story ? 84 : 54, bw = story ? 560 : 320;
+    const meta = LEVEL_META[G.lvl];
+    const bh = story ? 104 : 74, bw = story ? 560 : 340;
     ctx.globalAlpha = Math.max(0, a);
     ctx.fillStyle = 'rgba(14,42,71,.62)'; rr(VW / 2 - bw / 2, 80, bw, bh, 14); ctx.fill();
     ctx.strokeStyle = 'rgba(212,175,55,.8)'; ctx.lineWidth = 1.6; rr(VW / 2 - bw / 2, 80, bw, bh, 14); ctx.stroke();
-    ctx.fillStyle = '#ffd75e'; ctx.font = 'bold 26px Tahoma'; ctx.textAlign = 'center';
-    ctx.fillText(LT(LEVELS[G.lvl].name), VW / 2, 114);
+    ctx.textAlign = 'center';
+    if (meta){
+      ctx.fillStyle = 'rgba(212,175,55,.9)'; ctx.font = 'bold 13px Tahoma';
+      ctx.fillText(LT(meta.chapter), VW / 2, 102);
+    }
+    ctx.fillStyle = '#ffd75e'; ctx.font = 'bold 26px Tahoma';
+    ctx.fillText(LT(LEVELS[G.lvl].name), VW / 2, 130);
     if (story){
       ctx.fillStyle = '#F6F1E7'; ctx.font = '15px Tahoma';
-      ctx.fillText(story, VW / 2, 144);
+      ctx.fillText(story, VW / 2, 160);
     }
     ctx.globalAlpha = 1;
   }
