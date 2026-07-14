@@ -86,7 +86,12 @@ function showBest(){
 }
 
 /* save/continue — persists progress at level granularity (last level
-   reached, total coins, remaining bombs), not exact mid-level position */
+   reached, total coins, remaining bombs), not exact mid-level position.
+   `lvl` is a physical index into LEVELS. Because the WORLD/PLAY_ORDER
+   chapter reordering is an indirection layer (LEVELS itself stays
+   append-only), an old save's index still points at the same physical
+   level, so pre-chapter saves keep working with no migration — the run
+   simply resumes there and continues along the new PLAY_ORDER. */
 const SAVE_KEY = 'db_save';
 function loadSave(){
   try{ const s = JSON.parse(localStorage.getItem(SAVE_KEY)); return (s && s.v === 1) ? s : null; }
@@ -157,7 +162,7 @@ function startGame(){
   G.coins = 0; G.score = 0; G.dispScore = 0; G.lives = 3;
   P.fire = 5; P.maxHp = 3; P.bombs = 1;
   G.cpDone = new Set(); G.won = false;
-  loadLevel(0);
+  loadLevel(PLAY_ORDER[0]);
   G.state = 'play'; show(null); ac(); startMusic(); goFullscreen();
 }
 function levelComplete(){
@@ -209,7 +214,9 @@ const quit = () => { G.state = 'menu'; stopMusic(); updateBest(); showBest(); re
 $('quitBtn').onclick = quit;
 $('quitBtn2').onclick = quit;
 $('nextBtn').onclick = () => {
-  if (G.lvl + 1 < LEVELS.length){ loadLevel(G.lvl + 1); writeSave(); G.state = 'play'; show(null); last = performance.now(); }
+  /* advance along the chapter play-order, not the raw LEVELS index */
+  const nxt = nextLevelIndex(G.lvl);
+  if (nxt >= 0){ loadLevel(nxt); writeSave(); G.state = 'play'; show(null); last = performance.now(); }
   else showWin();
 };
 

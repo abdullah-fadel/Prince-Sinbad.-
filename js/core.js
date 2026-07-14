@@ -23,6 +23,11 @@ const GROUND_ENEMY_TYPES = new Set(['scorp', 'bandit', 'wolf', 'elite', 'thrower
 function enemyPoints(t){
   return t === 'scorp' ? 200 : t === 'wolf' ? 250 : t === 'thrower' ? 350 : t === 'elite' ? 800 : 300; // bandit/default
 }
+/* a level's exit door stays locked while ANY elite guard is still alive —
+   checks the whole roster (not just G.elite) so multi-elite levels like
+   the Inner Courtyard require every guard down; identical behaviour to the
+   old single-elite check when a level has just one E. */
+function anyEliteAlive(){ return G.ents.some(e => e.t === 'elite' && !e.dead && e.hp > 0); }
 
 const G = {
   state:'menu', lvl:0, grid:[], W:0, H:0,
