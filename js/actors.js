@@ -23,8 +23,14 @@ const SPR = {
      actual joints bend and the cloak flows per frame */
   heroRun: Array.from({length: HERO_RUN_FRAMES}, (_, i) => loadSprite(`img/hero_run/run_${i}.png`)),
   heroJump: Array.from({length: HERO_JUMP_FRAMES}, (_, i) => loadSprite(`img/hero_jump/jump_${i}.png`)),
-  heroRoll: Array.from({length: HERO_ROLL_FRAMES}, (_, i) => loadSprite(`img/hero_roll/roll_${i}.png`))
+  heroRoll: Array.from({length: HERO_ROLL_FRAMES}, (_, i) => loadSprite(`img/hero_roll/roll_${i}.png`)),
+  sword: loadSprite('img/sword.png')
 };
+/* the sword sprite's own grip point (where the crossguard meets the
+   handle), as a fraction of its width/height — the blade is drawn
+   pivoting around this point so it swings naturally from the hand */
+const SWORD_GRIP = { x: 807 / 939, y: 73 / 161 };
+const SWORD_LEN = 76; // on-screen blade length, sized to the hero's own 118-tall sprite
 
 /* draws `img` bottom-centered at the current transform's origin, at a
    fixed display height `h` (width follows the image's own aspect
@@ -101,14 +107,34 @@ function drawHero(){
     ctx.rotate(rot);
     drawSprite(SPR.hero, 118);
   }
-  /* transient attack flourishes — kept as vector effects since they're
-     not part of the character model itself */
+  /* melee swing: the real curved sword sprite, pivoting from the grip
+     (crossguard) held near the hand. An ease-out curve gives the slash
+     a natural committed-swing feel — quick to accelerate, then settling
+     through the follow-through — and a faint motion-blur trail behind
+     the blade sells the speed. */
   if (P.swordT > 0){
-    const prog = 1 - P.swordT / SWORD_TIME, ang = -1.5 + prog * 2.7;
-    ctx.save(); ctx.translate(12, -66);
-    ctx.strokeStyle = 'rgba(255,250,230,' + (.75 * (1 - prog)) + ')'; ctx.lineWidth = 6;
-    ctx.beginPath(); ctx.arc(0, 0, 34, ang - .7, ang + .7); ctx.stroke();
-    ctx.restore();
+    const prog = 1 - P.swordT / SWORD_TIME;
+    const eased = 1 - (1 - prog) * (1 - prog);
+    const ang = -1.5 + eased * 2.7;
+    const img = SPR.sword;
+    if (img.complete && img.naturalWidth){
+      const w = SWORD_LEN, h = w * (img.naturalHeight / img.naturalWidth);
+      const px = SWORD_GRIP.x * w, py = SWORD_GRIP.y * h;
+      ctx.save();
+      ctx.translate(22, -48);
+      for (let k = 3; k >= 1; k--){
+        ctx.save();
+        ctx.rotate(ang - k * .18);
+        ctx.scale(-1, 1); // blade points along the swing direction, not back toward the hilt art
+        ctx.globalAlpha = .1 * (4 - k);
+        ctx.drawImage(img, -px, -py, w, h);
+        ctx.restore();
+      }
+      ctx.rotate(ang);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, -px, -py, w, h);
+      ctx.restore();
+    }
   } else if (P.state === 'attack'){
     ctx.save(); ctx.translate(28, -68);
     const fg = ctx.createRadialGradient(0, 0, 2, 0, 0, 20);
