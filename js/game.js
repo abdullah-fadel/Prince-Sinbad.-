@@ -59,6 +59,8 @@ function loop(ts){
     else if (e.t === 'wolf') drawWolf(e);
     else if (e.t === 'elite') drawElite(e);
     else if (e.t === 'thrower') drawThrower(e);
+    else if (e.t === 'mummy') drawMummy(e);
+    else if (e.t === 'snake') drawSnake(e);
   }
   drawBoss(); drawPrincess(dt); drawFireballs(); drawKnives(); drawParts(); drawHero();
   ctx.restore();
@@ -121,7 +123,8 @@ function totalKeys(){ return CLEARED.size; }
 function markCleared(idx){ if (!CLEARED.has(idx)){ CLEARED.add(idx); saveCleared(); } }
 function stageUnlocked(st){ return !!st && !st.future && totalKeys() >= (st.unlockKeys || 0); }
 function levelUnlocked(idx){
-  const st = STAGE_OF[idx];
+  const st = STAGE_OF[idx], m = MAP_OF[idx];
+  if (m && (m.future || totalKeys() < (m.unlockKeys || 0))) return false;  // whole map still key-locked
   if (!stageUnlocked(st)) return false;
   const pos = st.levels.indexOf(idx);
   if (pos <= 0) return true;                       // first level of an unlocked stage

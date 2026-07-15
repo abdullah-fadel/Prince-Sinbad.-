@@ -14,14 +14,16 @@ const PAL = {
   mountain:  { body:'#7a828c', body2:'#5c636b', robe:'#5a6570', robeDark:'#333a40', turban:'#48566a', turbanDark:'#2f3a48', mask:'#2c3238' },
   babylon:   { body:'#2aa79f', body2:'#1c7f79', robe:'#b8912a', robeDark:'#8a6a12', turban:'#d4af37', turbanDark:'#8a6a12', mask:'#2a2410' },
   oasis:     { body:'#4a9a6a', body2:'#357a4e', robe:'#c9a15a', robeDark:'#8a6a2e', turban:'#2f8a7a', turbanDark:'#1f5a4e', mask:'#20301c' },
-  sandyCaves:{ body:'#9a8064', body2:'#7a6248', robe:'#6a5a48', robeDark:'#3a2f24', turban:'#8a6a4a', turbanDark:'#5a4530', mask:'#2a221a' }
+  sandyCaves:{ body:'#9a8064', body2:'#7a6248', robe:'#6a5a48', robeDark:'#3a2f24', turban:'#8a6a4a', turbanDark:'#5a4530', mask:'#2a221a' },
+  egypt:     { body:'#4a8a3a', body2:'#356a2a', robe:'#c9a24a', robeDark:'#8a6a1e', turban:'#2f8a7a', turbanDark:'#1f5a4e', mask:'#20301c' }
 };
 /* ground-enemy types sharing the same patrol/vision/damage plumbing —
    check membership here rather than repeating `e.t==='x'||e.t==='y'`
    conditions across enemies.js/player.js/boss.js */
-const GROUND_ENEMY_TYPES = new Set(['scorp', 'bandit', 'wolf', 'elite', 'thrower']);
+const GROUND_ENEMY_TYPES = new Set(['scorp', 'bandit', 'wolf', 'elite', 'thrower', 'mummy', 'snake']);
 function enemyPoints(t){
-  return t === 'scorp' ? 200 : t === 'wolf' ? 250 : t === 'thrower' ? 350 : t === 'elite' ? 800 : 300; // bandit/default
+  return t === 'scorp' ? 200 : t === 'wolf' ? 250 : t === 'snake' ? 260 : t === 'thrower' ? 350 :
+         t === 'mummy' ? 450 : t === 'elite' ? 800 : 300; // bandit/default
 }
 /* a level's exit door stays locked while ANY elite guard is still alive —
    checks the whole roster (not just G.elite) so multi-elite levels like
@@ -81,6 +83,8 @@ function loadLevel(i){
     if (ch === 'B'){ G.ents.push(mkBandit(x, y, pal)); G.grid[r][c] = ' '; }
     if (ch === 'V'){ G.ents.push(mkWolf(x, y, pal));   G.grid[r][c] = ' '; }
     if (ch === 'Y'){ G.ents.push(mkThrower(x, y, pal)); G.grid[r][c] = ' '; }
+    if (ch === 'U'){ G.ents.push(mkMummy(x, y, pal));  G.grid[r][c] = ' '; }
+    if (ch === 'N'){ G.ents.push(mkSnake(x, y, pal));  G.grid[r][c] = ' '; }
     if (ch === 'E'){ const el = mkElite(x, y, pal, L.eliteName); G.ents.push(el); G.elite = el; G.grid[r][c] = ' '; }
     if (ch === 'M'){ G.ents.push(mkMover(x, y));  G.grid[r][c] = ' '; }
     if (ch === 'F'){ G.ents.push(mkFaller(x, y)); G.grid[r][c] = ' '; }
@@ -109,6 +113,12 @@ function mkElite(x, y, pal, name){ return { t:'elite', x, y:y-10, w:44, h:64, vx
   name: name || { ar:STR.ar['elite.default'], en:STR.en['elite.default'] } }; }
 function mkThrower(x, y, pal){ return { t:'thrower', x, y:y-6, w:36, h:54, vx:-60, hp:2,
   anim:Math.random()*9, hurt:0, dead:0, alert:0, throwWindup:0, cool:0, pal: pal || PAL.desert }; }
+/* Egypt roster: a slow, tanky bandaged mummy (shrugs off stomps like the
+   elite and slowly pursues) and a fast, low, ground-hugging desert snake */
+function mkMummy(x, y, pal){ return { t:'mummy', x, y:y-6, w:38, h:56, vx:-38, hp:4, maxHp:4,
+  anim:Math.random()*9, hurt:0, dead:0, pal: pal || PAL.egypt }; }
+function mkSnake(x, y, pal){ return { t:'snake', x, y:y+30, w:46, h:18, vx:-118, hp:1,
+  anim:Math.random()*9, hurt:0, dead:0, pal: pal || PAL.egypt }; }
 function mkMover(x, y){ return { t:'mover', x, y, w:TILE*2, h:16, ox:x, range:TILE*3, dir:1, spd:70 }; }
 function mkFaller(x, y){ return { t:'faller', x, y, w:TILE, h:14, oy:y, ox:x, timer:-1, vy:0, respawn:0 }; }
 function mkBoss(x, y, kind, name){ return { t:'boss', kind: kind || 'chief', name, x, y:y-58, w:86, h:116, vx:0, vy:0, hp:14, maxHp:14,

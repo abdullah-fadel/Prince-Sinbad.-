@@ -282,6 +282,54 @@ function drawWolf(e){
   ctx.lineCap = 'butt'; ctx.restore();
 }
 
+/* ---- mummy (Egypt — procedural): a bandaged shambler with arms out and
+   faintly glowing eyes ---- */
+function drawMummy(e){
+  if (!e.dead) drawShadow(e.x + e.w / 2, e.y + e.h, e.w * .8);
+  ctx.save(); ctx.translate(e.x + e.w / 2, e.y + e.h); ctx.scale(Math.sign(e.vx) || 1, 1);
+  if (e.dead) ctx.rotate(Math.sin(e.anim * 4) * .35);
+  const sway = Math.sin(e.anim * 4) * 2, hurt = e.hurt > 0;
+  const band = hurt ? '#ffd9c0' : '#d9cdae', bandDark = hurt ? '#e6b498' : '#ab9d78';
+  /* torso + head */
+  ctx.fillStyle = band;
+  rr(-14, -52, 28, 52, 9); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, -58, 13, 0, 7); ctx.fill();
+  /* wrappings */
+  ctx.strokeStyle = bandDark; ctx.lineWidth = 2;
+  for (let i = 0; i < 6; i++){ ctx.beginPath(); ctx.moveTo(-14, -46 + i * 8); ctx.lineTo(14, -44 + i * 8 + (i % 2 ? 1.5 : -1)); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(-12, -64); ctx.lineTo(12, -60); ctx.moveTo(-12, -56); ctx.lineTo(12, -60); ctx.stroke();
+  /* outstretched arms */
+  ctx.strokeStyle = band; ctx.lineWidth = 9; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(6, -42); ctx.lineTo(30, -38 + sway); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(6, -36); ctx.lineTo(27, -32 + sway); ctx.stroke();
+  ctx.lineCap = 'butt';
+  /* glowing eyes */
+  ctx.fillStyle = '#8ce6d6';
+  ctx.beginPath(); ctx.arc(5, -60, 2.3, 0, 7); ctx.arc(-4, -59, 1.9, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+/* ---- desert snake (Egypt — procedural): a low, slithering serpent ---- */
+function drawSnake(e){
+  const pal = e.pal || PAL.egypt;
+  if (!e.dead) drawShadow(e.x + e.w / 2, e.y + e.h, e.w * .7);
+  ctx.save(); ctx.translate(e.x + e.w / 2, e.y + e.h); ctx.scale(Math.sign(e.vx) || 1, 1);
+  if (e.dead) ctx.scale(1, -1);
+  const t = e.anim, hurt = e.hurt > 0;
+  const body = hurt ? '#ffb0a0' : (pal.body || '#4a8a3a');
+  /* slithering body */
+  ctx.strokeStyle = body; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  for (let i = 0; i <= 11; i++){ const x = -24 + i * 4, y = -6 + Math.sin(t * 10 + i * .7) * 3; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke();
+  /* head + eye + flicking tongue */
+  const hy = -6 + Math.sin(t * 10 + 7.7) * 3;
+  ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(22, hy, 7, 5, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#ffd75e'; ctx.beginPath(); ctx.arc(25, hy - 1.5, 1.6, 0, 7); ctx.fill();
+  if (Math.sin(t * 7) > .5){ ctx.strokeStyle = '#e0483c'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(28, hy); ctx.lineTo(34, hy); ctx.stroke(); }
+  ctx.lineCap = 'butt'; ctx.restore();
+}
+
 /* ---- elite evil soldier: the tougher foe blocking each new scenario's
    exit — same sprite as the rank-and-file soldier, just bigger, plus a
    nameplate and hp bar ---- */
