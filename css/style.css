@@ -39,24 +39,32 @@ body.mobile .mobileOnly{display:inline-block;}
 /* ---------- touch controls ---------- */
 #touch{position:fixed;inset:0;z-index:30;pointer-events:none;display:none;}
 body.mobile.playing #touch{display:block;}
-.tbtn{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:84px;height:84px;border-radius:50%;pointer-events:auto;
-  background:rgba(246,241,231,.13);border:2px solid rgba(212,175,55,.5);color:var(--gold);
-  font-size:32px;font-weight:900;display:flex;align-items:center;justify-content:center;user-select:none;
-  -webkit-user-select:none;backdrop-filter:blur(2px);transition:background .1s,transform .1s;}
-.tbtn.on{background:rgba(212,175,55,.4);transform:scale(.94);}
+.tbtn{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:92px;height:92px;border-radius:50%;pointer-events:auto;
+  background:radial-gradient(circle at 50% 36%,rgba(246,241,231,.22),rgba(14,42,71,.34));
+  border:2.5px solid rgba(212,175,55,.65);color:var(--gold);
+  font-size:34px;font-weight:900;display:flex;align-items:center;justify-content:center;user-select:none;
+  -webkit-user-select:none;backdrop-filter:blur(3px);text-shadow:0 1px 3px rgba(0,0,0,.55);
+  box-shadow:0 3px 10px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.16);
+  transition:background .08s,transform .08s,box-shadow .08s;}
+.tbtn.on{background:radial-gradient(circle at 50% 36%,rgba(212,175,55,.6),rgba(212,175,55,.34));
+  transform:scale(.9);box-shadow:0 0 18px rgba(212,175,55,.65),inset 0 1px 0 rgba(255,255,255,.22);}
 /* right side: a free-floating joystick — it isn't pinned to one spot.
    #stickZone is a large invisible pad; wherever you press inside it,
    the visible base + knob spawn right under your thumb. Tune size by
    changing --stick-base/--stick-knob (JS reads --stick-max for drag range). */
-:root{ --stick-base:96px; --stick-knob:42px; --stick-max:34px; }
-#stickZone{position:absolute;right:0;bottom:0;width:64%;height:76%;pointer-events:auto;touch-action:none;}
+:root{ --stick-base:112px; --stick-knob:50px; --stick-max:40px; }
+/* left-side zone: press anywhere inside to spawn the joystick under the thumb */
+#stickZone{position:absolute;left:0;bottom:0;width:44%;height:70%;pointer-events:auto;touch-action:none;}
 #stickBase{position:absolute;left:0;top:0;width:var(--stick-base);height:var(--stick-base);border-radius:50%;pointer-events:none;
-  background:rgba(246,241,231,.10);border:2px solid rgba(212,175,55,.5);backdrop-filter:blur(2px);
-  transform:translate(-50%,-50%);opacity:0;}
+  background:radial-gradient(circle,rgba(246,241,231,.16),rgba(14,42,71,.12));
+  border:2.5px solid rgba(212,175,55,.6);backdrop-filter:blur(3px);
+  box-shadow:0 4px 20px rgba(0,0,0,.42),inset 0 0 22px rgba(212,175,55,.12);
+  transform:translate(-50%,-50%);opacity:0;transition:opacity .1s;}
 #stickBase.on{opacity:1;}
 #knob{position:absolute;left:0;top:0;width:var(--stick-knob);height:var(--stick-knob);border-radius:50%;pointer-events:none;
-  background:rgba(212,175,55,.35);border:2px solid rgba(212,175,55,.8);
-  box-shadow:0 3px 10px rgba(0,0,0,.3);transform:translate(-50%,-50%);opacity:0;}
+  background:radial-gradient(circle at 40% 34%,rgba(231,196,85,.72),rgba(184,145,42,.58));
+  border:2px solid rgba(255,225,140,.9);
+  box-shadow:0 3px 12px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.3);transform:translate(-50%,-50%);opacity:0;}
 #knob.on{opacity:1;transition:transform .05s linear;}
 #btnA{right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(112px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
   border-color:rgba(180,210,235,.6);color:#cfe0f0;}
@@ -65,7 +73,7 @@ body.mobile.playing #touch{display:block;}
 /* left side: jump on top, merged roll/down button below it */
 #btnJ{left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(120px + env(safe-area-inset-bottom,0px));}
 #btnD{left:calc(28px + env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
-  border-color:rgba(120,214,150,.6);color:#8fe0a8;font-size:24px;}
+  border-color:rgba(120,214,150,.6);color:#8fe0a8;font-size:30px;}
 
 #pauseBtn{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:calc(14px + env(safe-area-inset-left,0px));
   z-index:40;width:44px;height:44px;border-radius:12px;

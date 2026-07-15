@@ -18,11 +18,20 @@ addEventListener('blur', () => {           // window lost focus: release everyth
   for (const k in T) T[k] = false;
 });
 
-/* touch buttons */
-const T = { L:false, R:false, J:false, F:false, D:false, A:false };
+/* light haptic feedback for touch — a short buzz on discrete actions
+   (button taps, jump, roll, hits). Off on desktop, and user-toggleable
+   from settings; persisted in localStorage. */
+const HAPTIC_KEY = 'db_haptics';
+let hapticsOn = localStorage.getItem(HAPTIC_KEY) !== '0';
+function setHaptics(on){ hapticsOn = !!on; localStorage.setItem(HAPTIC_KEY, on ? '1' : '0'); }
+function buzz(ms){ if (isTouch && hapticsOn && navigator.vibrate){ try{ navigator.vibrate(ms); }catch(e){} } }
+
+/* touch buttons. T.U/T.Dn are the joystick's vertical (climb up / climb
+   down + drop-through); the four action buttons drive J/A/F/D. */
+const T = { L:false, R:false, U:false, Dn:false, J:false, F:false, D:false, A:false };
 function bindT(id, k){
   const el = document.getElementById(id);
-  const on  = e => { e.preventDefault(); T[k] = true;  el.classList.add('on');    ac(); };
+  const on  = e => { e.preventDefault(); T[k] = true;  el.classList.add('on'); buzz(7); ac(); };
   const off = e => { e.preventDefault(); T[k] = false; el.classList.remove('on'); };
   el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); on(e); });
   el.addEventListener('pointerup', off);
@@ -58,14 +67,18 @@ function stickMove(x, y){
   const len = Math.hypot(dx, dy) || 1;
   if (len > max){ dx = dx / len * max; dy = dy / len * max; }
   knobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+  /* 4-direction output: horizontal steers, vertical climbs ladders / drops
+     through one-way platforms. A slightly larger vertical dead-zone keeps
+     casual left/right steering from accidentally triggering climb/drop. */
   T.L = dx < -STICK_DEAD; T.R = dx > STICK_DEAD;
+  T.U = dy < -STICK_DEAD * 1.6; T.Dn = dy > STICK_DEAD * 1.6;
 }
 function stickHide(){
-  stickOn = false; T.L = T.R = false;
+  stickOn = false; T.L = T.R = T.U = T.Dn = false;
   stickBase.classList.remove('on'); knobEl.classList.remove('on');
 }
 stickZone.addEventListener('pointerdown', e => {
-  e.preventDefault(); stickZone.setPointerCapture(e.pointerId); stickShow(e.clientX, e.clientY); ac();
+  e.preventDefault(); stickZone.setPointerCapture(e.pointerId); stickShow(e.clientX, e.clientY); buzz(5); ac();
 });
 stickZone.addEventListener('pointermove', e => { if (stickOn && stickZone.hasPointerCapture(e.pointerId)) stickMove(e.clientX, e.clientY); });
 stickZone.addEventListener('pointerup', stickHide);
@@ -78,7 +91,8 @@ const inR    = () => keys['ArrowRight'] || keys['KeyD'] || T.R;
 const inJ    = () => keys['Space'] || keys['ArrowUp'] || keys['KeyW'] || T.J;
 const inSword= () => keys['KeyJ'] || keys['KeyX'] || T.A;                 // permanent melee
 const inF    = () => keys['KeyK'] || keys['KeyZ'] || T.F;                 // fireball (limited ammo)
-/* the touch down-button doubles as the dodge roll (merged ▼ + 💨) */
-const inRoll = () => keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyC'] || T.D;
-const inUp   = () => keys['ArrowUp'] || keys['KeyW'] || T.J;
-const inDn   = () => keys['ArrowDown'] || keys['KeyS'] || T.D;
+const inRoll = () => keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyC'] || T.D;  // dedicated dodge button
+/* climb/drop come from the joystick's vertical on touch (T.U/T.Dn), so the
+   jump and roll buttons stay single-purpose */
+const inUp   = () => keys['ArrowUp'] || keys['KeyW'] || T.U;
+const inDn   = () => keys['ArrowDown'] || keys['KeyS'] || T.Dn;

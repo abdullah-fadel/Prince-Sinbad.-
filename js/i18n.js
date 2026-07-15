@@ -17,7 +17,7 @@ const STR = {
     'menu.start': 'ابدأ المغامرة',
     'menu.continue': 'متابعة',
     'menu.settings': '⚙ الإعدادات',
-    'menu.hint': 'الحاسبة: الأسهم أو A/D للحركة • مسافة/W للقفز (مزدوجة) • J أو X للسيف • K أو Z لكرة النار • Shift أو C للدحرجة • S/▼ للنزول\nالموبايل: عصا التحكم على اليمين للحركة • السيف ⚔ وكرة النار 🔥 بجانبها • اقفز ⬆ يسارًا وتحته زر 💨▼ للدحرجة والنزول',
+    'menu.hint': 'الحاسبة: الأسهم أو A/D للحركة • مسافة/W للقفز (مزدوجة) • J أو X للسيف • K أو Z لكرة النار • Shift أو C للدحرجة • S/▼ للنزول\nالموبايل: عصا التحكم على اليسار للحركة والتسلّق (فوق/تحت) • على اليمين: القفز ⬆ والسيف ⚔ وكرة النار 🔥 والدحرجة 💨',
     'pause.title': 'إيقاف مؤقت',
     'pause.resume': 'استمرار',
     'pause.quit': 'القائمة الرئيسية',
@@ -53,6 +53,8 @@ const STR = {
     'controls.done': 'تم',
     'sound.on': '🔊 الصوت: يعمل',
     'sound.off': '🔇 الصوت: مغلق',
+    'haptics.on': '📳 الاهتزاز: يعمل',
+    'haptics.off': '📴 الاهتزاز: مغلق',
     'best.score': '🏅 أفضل نتيجة: {v}',
     'stats.coins': '💰 العملات: {v}',
     'stats.score': '⭐ النقاط: {v}',
@@ -75,7 +77,7 @@ const STR = {
     'menu.start': 'Start Adventure',
     'menu.continue': 'Continue',
     'menu.settings': '⚙ Settings',
-    'menu.hint': 'Keyboard: Arrows or A/D to move • Space/W to jump (double jump) • J or X to sword • K or Z to fireball • Shift or C to roll • S/▼ to drop down\nMobile: joystick on the right to move • sword ⚔ and fireball 🔥 beside it • jump ⬆ on the left with the roll/drop button 💨▼ below it',
+    'menu.hint': 'Keyboard: Arrows or A/D to move • Space/W to jump (double jump) • J or X to sword • K or Z to fireball • Shift or C to roll • S/▼ to drop down\nMobile: joystick on the left to move & climb (up/down) • on the right: jump ⬆, sword ⚔, fireball 🔥 and roll 💨',
     'pause.title': 'Paused',
     'pause.resume': 'Resume',
     'pause.quit': 'Main Menu',
@@ -111,6 +113,8 @@ const STR = {
     'controls.done': 'Done',
     'sound.on': '🔊 Sound: On',
     'sound.off': '🔇 Sound: Off',
+    'haptics.on': '📳 Vibration: On',
+    'haptics.off': '📴 Vibration: Off',
     'best.score': '🏅 Best score: {v}',
     'stats.coins': '💰 Coins: {v}',
     'stats.score': '⭐ Score: {v}',
@@ -150,6 +154,7 @@ function setLang(l){
   lang = l; localStorage.setItem('db_lang', l);
   applyLang();
   if (typeof refreshSoundBtns === 'function') refreshSoundBtns();
+  if (typeof refreshHapticBtn === 'function') refreshHapticBtn();
   if (typeof showBest === 'function') showBest();
   if (typeof refreshMenuButtons === 'function') refreshMenuButtons();
   if (typeof refreshLangBtns === 'function') refreshLangBtns();

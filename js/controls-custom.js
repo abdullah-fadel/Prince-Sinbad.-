@@ -17,16 +17,17 @@
 const CONTROLS_KEY = 'db_controls';
 const BTN_IDS = ['btnJ', 'btnD', 'btnA', 'btnF'];
 
-/* fractions computed from this project's shipped CSS defaults at a
-   representative landscape touch viewport (900x420), so "no saved
-   layout" looks the same as it always has. */
+/* Default control scheme (fractions of a landscape touch viewport):
+   movement joystick on the LEFT, all four action buttons clustered on the
+   RIGHT so one thumb steers while the other jumps/attacks. Jump sits at the
+   bottom-right (where the thumb rests) and is slightly larger. */
 const DEFAULT_LAYOUT = {
   v: 1,
-  btnJ:  { x: 0.073, y: 0.614, s: 1 },
-  btnD:  { x: 0.073, y: 0.857, s: 1 },
-  btnA:  { x: 0.936, y: 0.643, s: 1 },
-  btnF:  { x: 0.936, y: 0.857, s: 1 },
-  stick: { x: 0.36,  y: 0.24,  w: 0.64, h: 0.76, s: 1 }
+  btnJ:  { x: 0.90, y: 0.83, s: 1.15 },  // jump — primary, bottom-right
+  btnA:  { x: 0.93, y: 0.55, s: 1 },     // sword — upper right
+  btnF:  { x: 0.76, y: 0.63, s: 1 },     // fireball — inner upper
+  btnD:  { x: 0.73, y: 0.88, s: 1 },     // roll — inner lower
+  stick: { x: 0.02, y: 0.30, w: 0.44, h: 0.68, s: 1 }
 };
 
 function loadControlLayout(){
@@ -51,7 +52,7 @@ function applyControlLayout(layout){
   const L = layout || loadControlLayout() || DEFAULT_LAYOUT;
   for (const id of BTN_IDS){
     const el = document.getElementById(id), c = L[id];
-    const size = 84 * c.s;
+    const size = 92 * c.s;
     el.style.width = el.style.height = size + 'px';
     el.style.left = (c.x * innerWidth - size / 2) + 'px';
     el.style.top  = (c.y * innerHeight - size / 2) + 'px';

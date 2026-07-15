@@ -15,7 +15,7 @@ function hurtPlayer(dmg, kx){
   P.hp -= dmg; P.inv = 1.5;
   P.vx = (kx || -P.face) * 220; P.vy = -330;
   G.shake = .35; G.hitstop = Math.max(G.hitstop, .06);
-  SFX.hurt(); puff(P.x + P.w / 2, P.y + P.h / 2, 10, '#e05a4e', 150);
+  SFX.hurt(); buzz(26); puff(P.x + P.w / 2, P.y + P.h / 2, 10, '#e05a4e', 150);
   if (P.hp <= 0) killPlayer();
 }
 
@@ -82,7 +82,7 @@ function updatePlayer(dt){
   if (inRoll() && !rollHeld && P.rollCool <= 0 && P.rollT <= 0 && P.onG && !P.climb &&
       !overlapTile(P, 'L', 8)){
     P.rollT = ROLL_TIME; P.rollCool = ROLL_COOL; P.rollDir = mx || P.face; P.face = P.rollDir;
-    SFX.roll(); puff(P.x + P.w / 2, P.y + P.h, 9, '#d9c9a8', 130, .45);
+    SFX.roll(); buzz(15); puff(P.x + P.w / 2, P.y + P.h, 9, '#d9c9a8', 130, .45);
   }
   rollHeld = inRoll();
 
@@ -126,11 +126,11 @@ function updatePlayer(dt){
       P.climb = false; P.vy = -560; P.jbuf = 0; P.cut = false; SFX.jump();
     } else if (P.coyote > 0){
       P.vy = PHYS.jumpV; P.coyote = 0; P.jumps = 1; P.jbuf = 0; P.cut = false;
-      P.stretch = .14; SFX.jump();
+      P.stretch = .14; SFX.jump(); buzz(11);
       puff(P.x + P.w / 2, P.y + P.h, 6, '#d9c9a8', 80, .35);
     } else if (P.jumps < 2){
       P.vy = PHYS.doubleJumpV; P.jumps = 2; P.jbuf = 0; P.cut = false;
-      P.stretch = .14; SFX.djump();
+      P.stretch = .14; SFX.djump(); buzz(9);
       puff(P.x + P.w / 2, P.y + P.h / 2, 8, '#ffe9b0', 110, .4);
       ring(P.x + P.w / 2, P.y + P.h, '#ffe9b0', 26);
     }

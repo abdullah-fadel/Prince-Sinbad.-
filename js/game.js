@@ -357,6 +357,8 @@ function refreshSoundBtns(){
   $('soundBtn2').textContent = label;
 }
 function toggleSound(){ setSound(!soundOn); refreshSoundBtns(); }
+function refreshHapticBtn(){ $('hapticBtn').textContent = hapticsOn ? t('haptics.on') : t('haptics.off'); }
+function toggleHaptics(){ setHaptics(!hapticsOn); refreshHapticBtn(); buzz(18); }
 
 $('startBtn').onclick = startGame;
 $('continueBtn').onclick = continueGame;
@@ -366,6 +368,7 @@ $('resumeBtn').onclick = togglePause;
 $('pauseBtn').onclick = togglePause;
 $('soundBtn').onclick = toggleSound;
 $('soundBtn2').onclick = toggleSound;
+$('hapticBtn').onclick = toggleHaptics;
 const quit = () => { G.state = 'menu'; stopMusic(); updateBest(); showBest(); refreshMenuButtons(); show('menuOv'); };
 $('quitBtn').onclick = quit;
 $('quitBtn2').onclick = quit;
@@ -390,6 +393,7 @@ $('langEnBtn').onclick = () => setLang('en');
 
 applyLang();
 refreshSoundBtns();
+refreshHapticBtn();
 refreshLangBtns();
 refreshMenuButtons();
 showBest();
