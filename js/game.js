@@ -70,7 +70,7 @@ requestAnimationFrame(loop);
 /* ---------------- state / UI wiring ---------------- */
 const $ = id => document.getElementById(id);
 function show(id){
-  ['menuOv', 'pauseOv', 'overOv', 'lvlOv', 'winOv', 'settingsOv', 'controlsOv'].forEach(o => $(o).classList.add('hidden'));
+  ['menuOv', 'pauseOv', 'overOv', 'lvlOv', 'winOv', 'settingsOv', 'controlsOv', 'mapsOv'].forEach(o => $(o).classList.add('hidden'));
   if (id) $(id).classList.remove('hidden');
   document.body.classList.toggle('playing', G.state === 'play');
 }
@@ -144,6 +144,67 @@ function refreshLangBtns(){
   $('langArBtn').classList.toggle('active', lang === 'ar');
   $('langEnBtn').classList.toggle('active', lang === 'en');
 }
+
+/* ---------- world-map / level-select tree ----------
+   Renders the WORLD structure (maps → chapters → levels) into #mapsOv.
+   Playable levels are tappable and jump straight into a fresh run at
+   that level; future maps render as locked scaffold. */
+function levelIcon(idx){
+  const L = LEVELS[idx];
+  if (L.boss) return '👑';                               // final confrontation (princess)
+  if (L.rows.some(r => r.includes('G'))) return '☠';     // mid-roster boss (e.g. Warlord)
+  if (L.eliteName) return '🛡';                           // elite-guarded gate
+  return '⚔';                                            // ordinary level
+}
+function startAtLevel(idx){
+  G.coins = 0; G.score = 0; G.dispScore = 0; G.lives = 3;
+  P.fire = 5; P.maxHp = 3; P.bombs = 1;
+  G.cpDone = new Set(); G.won = false;
+  loadLevel(idx); writeSave();
+  G.state = 'play'; show(null); ac(); startMusic(); goFullscreen();
+}
+function buildMapsTree(){
+  const root = $('mapsTree'); root.textContent = '';
+  const playing = (G.state === 'play' || G.state === 'pause');
+  for (const m of WORLD){
+    const mapEl = document.createElement('div');
+    mapEl.className = 'mapNode' + (m.future ? ' future' : '');
+    const head = document.createElement('div'); head.className = 'mapHead';
+    const nm = document.createElement('span'); nm.textContent = LT(m.name);
+    const badge = document.createElement('span'); badge.className = 'mapBadge';
+    const count = m.chapters.reduce((n, c) => n + c.levels.length, 0);
+    badge.textContent = m.future ? t('maps.locked') : t('maps.levelsCount', { v: count });
+    head.appendChild(nm); head.appendChild(badge); mapEl.appendChild(head);
+    for (const ch of m.chapters){
+      const chEl = document.createElement('div'); chEl.className = 'chapNode';
+      const chHead = document.createElement('div'); chHead.className = 'chapHead';
+      chHead.textContent = LT(ch.name); chEl.appendChild(chHead);
+      if (!ch.levels.length){
+        const soon = document.createElement('div'); soon.className = 'chapSoon';
+        soon.textContent = t('maps.locked'); chEl.appendChild(soon);
+      } else {
+        const row = document.createElement('div'); row.className = 'lvlRow';
+        for (const idx of ch.levels){
+          const isCur = playing && G.lvl === idx;
+          const btn = document.createElement('button');
+          btn.className = 'lvlNode' + (isCur ? ' current' : '');
+          const num = document.createElement('span'); num.className = 'lvlNum';
+          num.textContent = playPos(idx) + 1;
+          const label = document.createElement('span');
+          label.textContent = levelIcon(idx) + ' ' + LT(LEVELS[idx].name) +
+            (isCur ? ' (' + t('maps.current') + ')' : '');
+          btn.appendChild(num); btn.appendChild(label);
+          btn.onclick = () => startAtLevel(idx);
+          row.appendChild(btn);
+        }
+        chEl.appendChild(row);
+      }
+      mapEl.appendChild(chEl);
+    }
+    root.appendChild(mapEl);
+  }
+}
+function openMaps(){ buildMapsTree(); show('mapsOv'); }
 
 /* fullscreen + landscape lock on mobile — best effort, failures are fine */
 function goFullscreen(){
@@ -224,6 +285,8 @@ $('nextBtn').onclick = () => {
 $('settingsBtn').onclick = () => openSettings('menuOv');
 $('settingsBtn2').onclick = () => openSettings('pauseOv');
 $('settingsCloseBtn').onclick = closeSettings;
+$('mapsBtn').onclick = openMaps;
+$('mapsCloseBtn').onclick = () => show('settingsOv');
 $('langArBtn').onclick = () => setLang('ar');
 $('langEnBtn').onclick = () => setLang('en');
 
