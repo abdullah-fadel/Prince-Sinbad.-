@@ -68,6 +68,14 @@ function updateEnemies(dt){
         else if (Math.random() < dt * .25){ e.pause = .8 + Math.random(); }
       }
 
+      /* mummy: slow, relentless — turns to shamble toward the player when
+         she's near and roughly level (edge-turning still stops it at gaps) */
+      if (e.t === 'mummy'){
+        const dx = P.x - e.x, dy = Math.abs(P.y - e.y);
+        if (!P.dead && dy < 80 && Math.abs(dx) > 6 && Math.abs(dx) < 340)
+          e.vx = Math.abs(e.vx) * Math.sign(dx);
+      }
+
       const winding = ((e.t === 'bandit' || e.t === 'elite') && e.windup > 0) ||
                       (e.t === 'thrower' && e.throwWindup > 0);
       const paused = (e.t === 'scorp' && e.pause > 0) || winding;
@@ -84,8 +92,9 @@ function updateEnemies(dt){
         if (P.vy > 160 && P.y + P.h < e.y + e.h * .6){ // stomp
           P.vy = -520; P.jumps = 1; G.hitstop = Math.max(G.hitstop, .05); SFX.stomp();
           puff(e.x + e.w / 2, e.y, 10, '#c9a15a', 130, .5);
-          /* the elite guard shrugs off a stomp into a normal hit instead of an instant kill */
-          if (e.t === 'elite'){ e.hp--; e.hurt = .2; } else e.hp = 0;
+          /* the elite guard and the tanky mummy shrug off a stomp into a
+             normal hit instead of an instant kill */
+          if (e.t === 'elite' || e.t === 'mummy'){ e.hp--; e.hurt = .2; } else e.hp = 0;
           if (e.hp <= 0 && !e.dead){
             e.dead = .01; const pts = enemyPoints(e.t); G.score += pts;
             ring(e.x + e.w / 2, e.y + e.h / 2, '#ffe9b0', 34);

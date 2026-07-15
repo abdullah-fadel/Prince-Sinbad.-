@@ -35,7 +35,8 @@ const BIOME_BG = {
   mountain:  { sky:['#cfe3f2','#a8c7dd','#7c9cbd','#516583'], sun:'#f2f9ff', cloud:'230,240,250', sil:'70,86,102',  ground:'70,74,84',  shape:'peaks' },
   babylon:   { sky:['#f5d98a','#e0b463','#b98a4a','#7a5a34'], sun:'#fff0c8', cloud:'240,220,170', sil:'150,110,58', ground:'80,58,30',  shape:'ziggurat' },
   oasis:     { sky:['#bfe8d8','#8fd0b0','#5aa889','#3a7860'], sun:'#fff6c8', cloud:'220,245,230', sil:'40,90,66',   ground:'70,88,50',  shape:'oasis' },
-  sandyCaves:{ sky:['#d9c9a8','#b8a480','#8a7458','#5a4a38'], sun:'#f0e0b0', cloud:'220,210,180', sil:'60,50,38',   ground:'60,50,36',  shape:'cavemouth' }
+  sandyCaves:{ sky:['#d9c9a8','#b8a480','#8a7458','#5a4a38'], sun:'#f0e0b0', cloud:'220,210,180', sil:'60,50,38',   ground:'60,50,36',  shape:'cavemouth' },
+  egypt:     { sky:['#f6d891','#eab55f','#d6893f','#9c5a33'], sun:'#fff2c4', cloud:'250,230,185', sil:'150,108,60', ground:'112,78,42', shape:'pyramids' }
 };
 function biomeOf(){ return (LEVELS[G.lvl] && LEVELS[G.lvl].biome) || 'desert'; }
 
@@ -100,6 +101,7 @@ function drawSkyline(off, base, col, s, shape){
     else if (shape === 'ziggurat') drawZigguratSilhouette();
     else if (shape === 'oasis') drawOasisSilhouette();
     else if (shape === 'cavemouth') drawCaveMouthSilhouette();
+    else if (shape === 'pyramids') drawPyramidSilhouette();
     else drawDomeSilhouette();
     ctx.restore();
   }
@@ -170,6 +172,15 @@ function drawCaveMouthSilhouette(){
   ctx.beginPath(); ctx.moveTo(316, -34); ctx.lineTo(326, -34); ctx.lineTo(321, -12); ctx.closePath(); ctx.fill();
 }
 
+/* egypt: three pyramids of varying size + a slim obelisk */
+function drawPyramidSilhouette(){
+  ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(118, -150); ctx.lineTo(220, 0); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(178, 0); ctx.lineTo(300, -205); ctx.lineTo(422, 0); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(398, 0); ctx.lineTo(472, -108); ctx.lineTo(546, 0); ctx.closePath(); ctx.fill();
+  ctx.fillRect(150, -96, 8, 96);
+  ctx.beginPath(); ctx.moveTo(150, -96); ctx.lineTo(154, -108); ctx.lineTo(158, -96); ctx.closePath(); ctx.fill();
+}
+
 /* per-biome tint for solid ground tiles, so each scenario's terrain
    (sand, forest loam, mountain stone, sunbaked brick) reads distinctly */
 const BIOME_TILE = {
@@ -178,7 +189,8 @@ const BIOME_TILE = {
   mountain:  { face:'#8f96a0', shade:'#767d88', top:'#c7ccd2' },
   babylon:   { face:'#c7a55c', shade:'#a8863e', top:'#e8cf8a' },
   oasis:     { face:'#5c8a5e', shade:'#4a7248', top:'#8fc27a' },
-  sandyCaves:{ face:'#8a7458', shade:'#6e5c46', top:'#a99168' }
+  sandyCaves:{ face:'#8a7458', shade:'#6e5c46', top:'#a99168' },
+  egypt:     { face:'#c9a05a', shade:'#a8813e', top:'#e6c97e' }
 };
 
 /* ---- tiles (culled to camera view) ---- */

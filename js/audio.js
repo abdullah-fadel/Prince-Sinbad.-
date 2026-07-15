@@ -46,9 +46,12 @@ const SFX = {
   djump: () => beep(430, .16, 'square',  .10, +260),
   land : () => beep(160, .08, 'triangle',.10, -60),
   coin : () => { beep(1000, .07, 'square', .09); setTimeout(() => beep(1420, .12, 'square', .09), 60); },
-  fire : () => beep(210, .22, 'sawtooth',.12, -140),
+  /* fireball: an airy descending whoosh + a tiny bright sparkle (not the old
+     low sawtooth buzz, which read as a rude noise) */
+  fire : () => { beep(760, .17, 'sine', .09, -440); setTimeout(() => beep(1180, .05, 'triangle', .05, -320), 10); },
   hit  : () => beep(150, .28, 'sawtooth',.15, -90),
-  stomp: () => beep(240, .14, 'triangle',.14, -120),
+  /* stomp: a bouncy pop + a crisp tick, so landing on a foe feels springy */
+  stomp: () => { beep(200, .09, 'sine', .14, +170); setTimeout(() => beep(660, .06, 'triangle', .07, -240), 10); },
   hurt : () => beep(120, .35, 'sawtooth',.16, -60),
   chest: () => { beep(600, .1, 'triangle', .12); setTimeout(() => beep(900, .16, 'triangle', .12), 90); },
   check: () => { beep(520, .12, 'triangle', .11); setTimeout(() => beep(780, .18, 'triangle', .11), 110); },

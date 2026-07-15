@@ -30,8 +30,10 @@ function camSnap(){
 }
 
 function updateCamera(dt){
-  /* look-ahead: drift the view toward where the player is heading */
-  const wantLook = Math.abs(P.vx) > 40 ? P.face * 84 : cam.lookX;
+  /* look-ahead: drift the view toward where the player is heading. Scaled by
+     actual velocity (not a fixed jump on the facing flag) so it eases through
+     zero when turning instead of snapping ±84 and making the view judder. */
+  const wantLook = Math.max(-1, Math.min(1, P.vx / PHYS.top)) * 84;
   cam.lookX += (wantLook - cam.lookX) * Math.min(1, dt * 3);
 
   /* boss fight: frame both fighters and zoom out a touch */
