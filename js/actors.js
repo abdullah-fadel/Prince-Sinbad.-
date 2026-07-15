@@ -159,37 +159,20 @@ function drawHero(){
       ctx.restore();
     }
   } else if (P.punchT > 0){
+    /* No drawn arm: the fire simply emanates from the hero's own hand. When
+       real raised-arm cast frames are playing the flame sits at chest height;
+       otherwise it comes off his actual (lowered) hand in the static pose. */
     const pr = 1 - Math.max(0, P.punchT) / .28;
-    const jab = Math.sin(Math.min(1, pr) * Math.PI);   // forward thrust 0→1→0
-    const raise = Math.min(1, pr * 3);                 // arm snaps up to chest
-    const fx = 22 + jab * 12, fy = -62 - raise * 2;    // fist, reaching forward at chest
+    const jab = Math.sin(Math.min(1, pr) * Math.PI);
+    const fx = (heroFireReady() ? 26 : 24) + jab * 8;
+    const fy = heroFireReady() ? -62 : -47;            // chest vs. real lowered hand
     ctx.save();
-    /* When real "Swing Arms" cast frames are present the body already shows
-       the raised arm, so only the flame is drawn. Otherwise draw the raised
-       arm to match his actual anatomy — a red-cloak upper arm, a bare tan
-       forearm and a tan fist — so it reads as HIS arm, not a foreign limb. */
-    if (!heroFireReady()){
-      const shx = -3, shy = -82;                       // shoulder (under the red cloak)
-      const elx = 9, ely = -60 - raise * 4;            // elbow, rising toward the chest
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.strokeStyle = 'rgba(35,18,10,.5)'; ctx.lineWidth = 15;    // soft dark base for depth
-      ctx.beginPath(); ctx.moveTo(shx, shy); ctx.lineTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
-      ctx.strokeStyle = '#9e2a22'; ctx.lineWidth = 13;             // upper arm — red cloak sleeve
-      ctx.beginPath(); ctx.moveTo(shx, shy); ctx.lineTo(elx, ely); ctx.stroke();
-      ctx.strokeStyle = '#cd9760'; ctx.lineWidth = 11;             // forearm — bare skin
-      ctx.beginPath(); ctx.moveTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
-      ctx.strokeStyle = 'rgba(120,80,40,.35)'; ctx.lineWidth = 3;  // muscle shade
-      ctx.beginPath(); ctx.moveTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
-      ctx.fillStyle = '#cd9760'; ctx.beginPath(); ctx.arc(fx, fy, 7, 0, 7); ctx.fill();  // fist
-      ctx.strokeStyle = 'rgba(120,80,40,.5)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(fx, fy, 7, 0, 7); ctx.stroke();
-    }
-    /* flame off the fist, swelling as the cast releases */
-    const R = 9 + jab * 17;
-    const fg = ctx.createRadialGradient(fx + 5, fy, 2, fx + 5, fy, R);
+    const R = 9 + jab * 17;                            // flame swells as the cast releases
+    const fg = ctx.createRadialGradient(fx + 4, fy, 2, fx + 4, fy, R);
     fg.addColorStop(0, 'rgba(255,244,190,.95)');
     fg.addColorStop(.45, 'rgba(255,150,50,.85)');
     fg.addColorStop(1, 'rgba(255,90,20,0)');
-    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(fx + 5, fy, R, 0, 7); ctx.fill();
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(fx + 4, fy, R, 0, 7); ctx.fill();
     ctx.restore();
   }
   ctx.restore();
