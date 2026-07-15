@@ -316,14 +316,23 @@ const LEVELS = [
    nothing to PLAY_ORDER and are never reachable yet (rule 5).
    ========================================================= */
 const WORLD = [
-  { id:'iraq', name:{ar:'العراق — أرض البداية',en:'Iraq — Land of Beginnings'},
+  { id:'iraq', unlockKeys:0, name:{ar:'خريطة العراق',en:'Iraq Map'},
+    /* chapters == "stages" (مراحل) in the UI. `unlockKeys` gates a stage on
+       the running key total (1 key per level cleared); `future:true` marks a
+       coming-soon stage with no levels yet. */
     chapters:[
-      { name:{ar:'جنوب الرافدين',en:'Southern Mesopotamia'}, levels:[0,2,3,4] },
-      { name:{ar:'الأهوار الجنوبية',en:'The Southern Marshes'}, levels:[10,11,12] },
-      { name:{ar:'سراديب القصر وأطلال بابل',en:'Palace Cellars & Babylon'}, levels:[1,5,8] },
-      { name:{ar:'دروب كردستان الشمالية',en:'Northern Kurdistan Trails'}, levels:[6,7,13] },
-      { name:{ar:'حصن الوريث الأخير',en:"The Last Heir's Fortress"}, levels:[14,15] },
-      { name:{ar:'قاعة العرش',en:'The Throne Room'}, levels:[9] }
+      { name:{ar:'صحراء الأنبار',en:'Anbar Desert'}, unlockKeys:0,
+        desc:{ar:'منطقة صحراوية واسعة مليئة بالتحديات — اجمع قواك وتجاوز العقبات لتصل للنصر.',
+               en:'A vast desert region full of challenges — gather your strength and overcome every obstacle to reach victory.'},
+        levels:[0,2,3,4,10,11,12,1,5,8] },
+      { name:{ar:'بادية العراق',en:'The Iraqi Steppe'}, unlockKeys:10,
+        desc:{ar:'سهوبٌ قاحلةٌ تقود أثر الخاطفين إلى قلب المعركة — تُفتح بجمع المفاتيح.',
+               en:"Barren steppes where the captors' trail leads to the heart of battle — unlocked by collecting keys."},
+        levels:[6,7,13,14,15,9] },
+      { name:{ar:'أرض بابل',en:'The Land of Babylon'}, future:true, unlockKeys:99,
+        desc:{ar:'أطلال بابل الأسطورية… فصلٌ قادمٌ من الملحمة.',
+               en:'The legendary ruins of Babylon… a coming chapter of the epic.'},
+        levels:[] }
     ]
   },
   /* ---- future maps: data scaffold only, no playable levels yet ---- */
@@ -364,17 +373,27 @@ const WORLD = [
   }
 ];
 
-/* Flattened play order + per-level chapter/map metadata, derived from
-   WORLD. PLAY_ORDER[p] = the LEVELS index played at sequence position p;
-   LEVEL_META[lvlIndex] = { map, chapter } bilingual names for the HUD. */
+/* Flattened play order + per-level metadata, derived from WORLD.
+   PLAY_ORDER[p] = the LEVELS index played at sequence position p;
+   LEVEL_META[lvlIndex] = { map, chapter } bilingual names for the HUD;
+   STAGE_OF / MAP_OF map a level index to its owning stage / map object
+   (used by the map screen's key-gating and level-select). */
 const PLAY_ORDER = [];
 const LEVEL_META = {};
+const STAGE_OF = {};
+const MAP_OF = {};
 for (const m of WORLD) for (const ch of m.chapters) for (const li of ch.levels){
   PLAY_ORDER.push(li);
   LEVEL_META[li] = { map:m.name, chapter:ch.name };
+  STAGE_OF[li] = ch; MAP_OF[li] = m;
 }
 function playPos(lvlIndex){ return PLAY_ORDER.indexOf(lvlIndex); }
 function nextLevelIndex(lvlIndex){
   const p = playPos(lvlIndex);
   return (p >= 0 && p + 1 < PLAY_ORDER.length) ? PLAY_ORDER[p + 1] : -1;
+}
+/* stage-relative helpers for the map screen */
+function stageIndexOf(lvlIndex){
+  const st = STAGE_OF[lvlIndex];
+  return st ? st.levels.indexOf(lvlIndex) : -1;   // 0-based position within its stage
 }

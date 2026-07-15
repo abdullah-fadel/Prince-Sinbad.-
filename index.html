@@ -14,9 +14,9 @@
 <button id="pauseBtn" aria-label="إيقاف مؤقت" data-i18n-aria="pauseBtn.aria">⏸</button>
 <button id="btnBomb" class="hidden"></button>
 
-<!-- Touch controls: a free-floating joystick (appears wherever you press
-     within the right-side zone) + sword + fire on the right,
-     jump with the merged roll/down button on the left -->
+<!-- Touch controls: a free-floating 4-direction joystick (spawns wherever
+     you press within the left-side zone) for move + climb/drop, with the
+     jump / sword / fire / roll action buttons clustered on the right -->
 <div id="touch">
   <div id="stickZone"></div>
   <div id="stickBase"></div>
@@ -24,7 +24,7 @@
   <div class="tbtn sword" id="btnA">⚔</div>
   <div class="tbtn fire" id="btnF">🔥</div>
   <div class="tbtn jump" id="btnJ">⬆</div>
-  <div class="tbtn roll" id="btnD">💨▼</div>
+  <div class="tbtn roll" id="btnD">💨</div>
 </div>
 
 <!-- Rotate-your-phone overlay (portrait) -->
@@ -87,15 +87,24 @@
     <button class="btn ghost" id="langEnBtn">English</button>
   </div>
   <button class="btn ghost" id="mapsBtn" data-i18n="settings.maps">🗺 الخرائط</button>
+  <button class="btn ghost mobileOnly" id="hapticBtn">📳 الاهتزاز: يعمل</button>
   <button class="btn ghost mobileOnly" id="customizeBtn" data-i18n="settings.customize">تخصيص أزرار التحكم</button>
   <button class="btn" id="settingsCloseBtn" data-i18n="settings.close">رجوع</button>
 </div>
 
 <div class="overlay hidden" id="mapsOv">
-  <div class="title" style="font-size:32px;" data-i18n="maps.title">🗺 شجرة الخرائط</div>
-  <div class="subtitle" style="font-size:14px;margin-bottom:12px;" data-i18n="maps.subtitle">خرائط ← فصول ← مستويات — اضغط مستوى للعب</div>
-  <div id="mapsTree"></div>
-  <button class="btn" id="mapsCloseBtn" data-i18n="settings.close">رجوع</button>
+  <div class="mapsTop">
+    <button class="btn ghost small" id="mapsCloseBtn">←&nbsp;<span data-i18n="settings.close">رجوع</span></button>
+    <div class="mapsScreenTitle" id="mapsScreenTitle">خريطة العراق</div>
+    <div class="mapsKeys">🔑&nbsp;<span id="mapsKeyCount">0</span></div>
+  </div>
+  <!-- RTL flex lays the first child on the right, so order detail→path→maps
+       to match the reference (maps list on the left, stage detail on the right) -->
+  <div class="mapsBody">
+    <div class="mapsCol mapsDetail" id="mapsDetail"></div>
+    <div class="mapsCol mapsPath" id="mapsPath"></div>
+    <div class="mapsCol mapsMaps" id="mapsMaps"></div>
+  </div>
 </div>
 
 <div class="overlay hidden" id="controlsOv">

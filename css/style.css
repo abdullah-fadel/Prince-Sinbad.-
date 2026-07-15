@@ -39,24 +39,32 @@ body.mobile .mobileOnly{display:inline-block;}
 /* ---------- touch controls ---------- */
 #touch{position:fixed;inset:0;z-index:30;pointer-events:none;display:none;}
 body.mobile.playing #touch{display:block;}
-.tbtn{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:84px;height:84px;border-radius:50%;pointer-events:auto;
-  background:rgba(246,241,231,.13);border:2px solid rgba(212,175,55,.5);color:var(--gold);
-  font-size:32px;font-weight:900;display:flex;align-items:center;justify-content:center;user-select:none;
-  -webkit-user-select:none;backdrop-filter:blur(2px);transition:background .1s,transform .1s;}
-.tbtn.on{background:rgba(212,175,55,.4);transform:scale(.94);}
+.tbtn{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:92px;height:92px;border-radius:50%;pointer-events:auto;
+  background:radial-gradient(circle at 50% 36%,rgba(246,241,231,.22),rgba(14,42,71,.34));
+  border:2.5px solid rgba(212,175,55,.65);color:var(--gold);
+  font-size:34px;font-weight:900;display:flex;align-items:center;justify-content:center;user-select:none;
+  -webkit-user-select:none;backdrop-filter:blur(3px);text-shadow:0 1px 3px rgba(0,0,0,.55);
+  box-shadow:0 3px 10px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.16);
+  transition:background .08s,transform .08s,box-shadow .08s;}
+.tbtn.on{background:radial-gradient(circle at 50% 36%,rgba(212,175,55,.6),rgba(212,175,55,.34));
+  transform:scale(.9);box-shadow:0 0 18px rgba(212,175,55,.65),inset 0 1px 0 rgba(255,255,255,.22);}
 /* right side: a free-floating joystick — it isn't pinned to one spot.
    #stickZone is a large invisible pad; wherever you press inside it,
    the visible base + knob spawn right under your thumb. Tune size by
    changing --stick-base/--stick-knob (JS reads --stick-max for drag range). */
-:root{ --stick-base:96px; --stick-knob:42px; --stick-max:34px; }
-#stickZone{position:absolute;right:0;bottom:0;width:64%;height:76%;pointer-events:auto;touch-action:none;}
+:root{ --stick-base:112px; --stick-knob:50px; --stick-max:40px; }
+/* left-side zone: press anywhere inside to spawn the joystick under the thumb */
+#stickZone{position:absolute;left:0;bottom:0;width:44%;height:70%;pointer-events:auto;touch-action:none;}
 #stickBase{position:absolute;left:0;top:0;width:var(--stick-base);height:var(--stick-base);border-radius:50%;pointer-events:none;
-  background:rgba(246,241,231,.10);border:2px solid rgba(212,175,55,.5);backdrop-filter:blur(2px);
-  transform:translate(-50%,-50%);opacity:0;}
+  background:radial-gradient(circle,rgba(246,241,231,.16),rgba(14,42,71,.12));
+  border:2.5px solid rgba(212,175,55,.6);backdrop-filter:blur(3px);
+  box-shadow:0 4px 20px rgba(0,0,0,.42),inset 0 0 22px rgba(212,175,55,.12);
+  transform:translate(-50%,-50%);opacity:0;transition:opacity .1s;}
 #stickBase.on{opacity:1;}
 #knob{position:absolute;left:0;top:0;width:var(--stick-knob);height:var(--stick-knob);border-radius:50%;pointer-events:none;
-  background:rgba(212,175,55,.35);border:2px solid rgba(212,175,55,.8);
-  box-shadow:0 3px 10px rgba(0,0,0,.3);transform:translate(-50%,-50%);opacity:0;}
+  background:radial-gradient(circle at 40% 34%,rgba(231,196,85,.72),rgba(184,145,42,.58));
+  border:2px solid rgba(255,225,140,.9);
+  box-shadow:0 3px 12px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.3);transform:translate(-50%,-50%);opacity:0;}
 #knob.on{opacity:1;transition:transform .05s linear;}
 #btnA{right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(112px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
   border-color:rgba(180,210,235,.6);color:#cfe0f0;}
@@ -65,7 +73,7 @@ body.mobile.playing #touch{display:block;}
 /* left side: jump on top, merged roll/down button below it */
 #btnJ{left:calc(24px + env(safe-area-inset-left,0px));bottom:calc(120px + env(safe-area-inset-bottom,0px));}
 #btnD{left:calc(28px + env(safe-area-inset-left,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:76px;height:76px;
-  border-color:rgba(120,214,150,.6);color:#8fe0a8;font-size:24px;}
+  border-color:rgba(120,214,150,.6);color:#8fe0a8;font-size:30px;}
 
 #pauseBtn{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:calc(14px + env(safe-area-inset-left,0px));
   z-index:40;width:44px;height:44px;border-radius:12px;
@@ -109,32 +117,86 @@ body.playing #pauseBtn{display:block;}
 #ctlSliders label{display:flex;align-items:center;gap:10px;color:var(--cream);font-size:14px;}
 #ctlSliders input[type=range]{flex:1;}
 
-/* ---------- world-map tree (Maps screen) ---------- */
-/* like #controlsOv, the tree can be taller than a landscape phone, so it
-   scrolls from the top instead of centre-clipping (keeps the Back button
-   reachable). */
-#mapsOv{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  touch-action:pan-y;padding-top:16px;padding-bottom:24px;}
-#mapsTree{width:min(94vw,640px);text-align:start;margin-bottom:14px;}
-.mapNode{background:rgba(14,42,71,.4);border:1px solid rgba(212,175,55,.4);border-radius:14px;
-  padding:12px 14px;margin:10px 0;}
-.mapNode.future{opacity:.62;border-style:dashed;}
-.mapHead{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  font-size:19px;font-weight:800;color:var(--gold);margin-bottom:4px;}
-.mapBadge{font-size:12px;font-weight:700;color:var(--cream);opacity:.75;white-space:nowrap;}
-.chapNode{margin:8px 0 8px 6px;padding-inline-start:12px;border-inline-start:2px solid rgba(212,175,55,.35);}
-.chapHead{font-size:15px;font-weight:700;color:var(--cream);opacity:.9;margin-bottom:6px;}
-.lvlRow{display:flex;flex-wrap:wrap;gap:7px;}
-.lvlNode{display:inline-flex;align-items:center;gap:6px;background:rgba(212,175,55,.14);
-  border:1px solid rgba(212,175,55,.55);border-radius:10px;color:var(--cream);
-  padding:7px 11px;font-size:13.5px;font-family:inherit;cursor:pointer;transition:background .12s,transform .08s;}
-.lvlNode:hover{background:rgba(212,175,55,.28);}
-.lvlNode:active{transform:translateY(2px);}
-.lvlNode .lvlNum{font-weight:800;color:var(--gold);}
-.lvlNode.current{background:rgba(120,214,150,.22);border-color:rgba(120,214,150,.8);}
-.lvlNode.locked{opacity:.6;cursor:default;border-style:dashed;}
-.lvlNode.locked:hover{background:rgba(212,175,55,.14);}
-.chapSoon{font-size:13px;color:var(--cream);opacity:.6;font-style:italic;}
+/* ---------- world-map screen (maps → stages → levels) ---------- */
+#mapsOv{justify-content:flex-start;padding:0;overflow:hidden;}
+.mapsTop{flex-shrink:0;width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 16px;background:rgba(8,16,28,.6);border-bottom:1.5px solid rgba(212,175,55,.4);}
+.mapsTop .btn.small{margin:0;}
+.mapsScreenTitle{font-size:clamp(18px,3.4vw,26px);font-weight:900;color:var(--gold);
+  text-shadow:0 2px 8px rgba(212,175,55,.35);}
+.mapsKeys{font-size:18px;font-weight:800;color:var(--gold);background:rgba(14,42,71,.6);
+  border:1.5px solid rgba(212,175,55,.55);border-radius:12px;padding:6px 14px;white-space:nowrap;}
+.mapsBody{flex:1;width:100%;min-height:0;display:flex;gap:12px;padding:14px;overflow:hidden;}
+.mapsCol{background:rgba(14,42,71,.32);border:1px solid rgba(212,175,55,.3);border-radius:14px;
+  padding:10px;overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:start;}
+.mapsMaps{flex:0 0 230px;display:flex;flex-direction:column;gap:8px;}
+.mapsPath{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;
+  background-image:radial-gradient(circle at 30% 20%,rgba(212,175,55,.06),transparent 60%),
+    radial-gradient(circle at 70% 80%,rgba(120,160,120,.06),transparent 55%);}
+.mapsDetail{flex:0 0 320px;display:flex;flex-direction:column;gap:8px;}
+
+/* left: map cards + key summary */
+.mapCard{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;
+  background:rgba(14,42,71,.5);border:1.5px solid rgba(212,175,55,.4);border-radius:12px;
+  padding:10px 12px;color:var(--cream);font-family:inherit;cursor:pointer;text-align:start;
+  transition:background .12s,border-color .12s,transform .08s;}
+.mapCard:hover{background:rgba(14,42,71,.72);}
+.mapCard:active{transform:translateY(2px);}
+.mapCard.sel{border-color:var(--gold);background:rgba(212,175,55,.2);box-shadow:0 0 0 1px rgba(212,175,55,.5) inset;}
+.mapCard.locked{opacity:.6;border-style:dashed;cursor:default;}
+.mapCard.locked:hover{background:rgba(14,42,71,.5);}
+.mapCardName{font-size:15px;font-weight:800;color:var(--gold);}
+.mapCardSub{font-size:12px;opacity:.85;}
+.keySummary{margin-top:6px;background:rgba(8,16,28,.5);border:1px solid rgba(212,175,55,.35);
+  border-radius:12px;padding:10px 12px;text-align:center;}
+.keySummaryTitle{font-size:12px;color:var(--cream);opacity:.8;}
+.keySummaryVal{font-size:20px;font-weight:900;color:var(--gold);margin:2px 0;}
+.keySummaryHint{font-size:11px;color:var(--cream);opacity:.6;line-height:1.5;}
+
+/* center: stage path nodes joined by a dashed link */
+.stageNode{display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:rgba(14,42,71,.55);border:2px solid rgba(212,175,55,.45);border-radius:14px;
+  padding:10px 16px;min-width:180px;color:var(--cream);font-family:inherit;cursor:pointer;
+  transition:transform .08s,border-color .12s,background .12s;}
+.stageNode:hover{background:rgba(14,42,71,.75);}
+.stageNode.sel{border-color:var(--gold);box-shadow:0 0 14px rgba(212,175,55,.4);background:rgba(212,175,55,.16);}
+.stageBadge{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:900;margin-bottom:2px;}
+.stageBadge.done{background:rgba(120,214,150,.3);border:2px solid #7be07b;color:#bff4c0;}
+.stageBadge.open{background:rgba(212,175,55,.25);border:2px solid var(--gold);color:var(--gold);}
+.stageBadge.lock{background:rgba(0,0,0,.35);border:2px solid rgba(212,175,55,.4);color:var(--cream);opacity:.8;}
+.stageNodeName{font-size:15px;font-weight:800;color:var(--gold);}
+.stageNodeProg{font-size:12px;opacity:.85;}
+.stagePathLink{width:0;height:26px;border-inline-start:3px dashed rgba(212,175,55,.5);}
+
+/* right: stage detail */
+.detailTitle{font-size:20px;font-weight:900;color:var(--gold);border-bottom:1px solid rgba(212,175,55,.3);padding-bottom:6px;}
+.detailDesc{font-size:13px;color:var(--cream);opacity:.85;line-height:1.7;}
+.detailLocked{font-size:13px;color:#ffcf7b;background:rgba(0,0,0,.3);border:1px dashed rgba(212,175,55,.5);
+  border-radius:10px;padding:8px 10px;text-align:center;}
+.detailSection{font-size:14px;font-weight:800;color:var(--cream);opacity:.9;margin-top:4px;}
+.lvlGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;}
+.lvlCell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;aspect-ratio:1;
+  background:rgba(212,175,55,.14);border:1.5px solid rgba(212,175,55,.5);border-radius:10px;
+  color:var(--cream);font-family:inherit;cursor:pointer;transition:background .12s,transform .08s;}
+.lvlCell:hover{background:rgba(212,175,55,.3);}
+.lvlCell:active{transform:translateY(2px);}
+.lvlCellNum{font-size:15px;font-weight:900;color:var(--gold);line-height:1;}
+.lvlCellIcon{font-size:12px;line-height:1;}
+.lvlCell.cleared{background:rgba(120,214,150,.2);border-color:rgba(120,214,150,.75);}
+.lvlCell.cleared .lvlCellIcon{color:#8fe0a8;}
+.lvlCell.current{box-shadow:0 0 0 2px #7be07b inset;}
+.lvlCell.locked{opacity:.5;border-style:dashed;cursor:default;}
+.lvlCell.locked:hover{background:rgba(212,175,55,.14);}
+.detailPlay{margin:8px 0 0;padding:12px;font-size:19px;align-self:stretch;}
+.detailPlay.disabled{filter:grayscale(.7);opacity:.6;cursor:default;box-shadow:none;}
+
+/* stack the three columns on narrow / portrait screens */
+@media (max-width:760px){
+  .mapsBody{flex-direction:column;overflow-y:auto;}
+  .mapsMaps,.mapsPath,.mapsDetail{flex:none;width:100%;}
+  .mapsPath{padding:14px 10px;}
+}
 
 /* ---------- rotate-device overlay ---------- */
 #rotateOv{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;
