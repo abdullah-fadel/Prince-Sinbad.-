@@ -37,12 +37,14 @@ body.mobile .mobileOnly{display:inline-block;}
 .hint{opacity:.6;font-size:14px;margin-top:22px;max-width:560px;line-height:1.9;}
 
 /* ---------- touch controls ---------- */
-#touch{position:fixed;inset:0;z-index:30;pointer-events:none;display:none;}
+#touch{position:fixed;inset:0;z-index:30;pointer-events:none;display:none;opacity:var(--ctl-opacity,1);}
 body.mobile.playing #touch{display:block;}
-/* while the customize sheet is open, show the real controls as a live
-   preview (non-interactive so taps don't drive the paused game) */
+/* customize screen: show the real controls and make them drag targets
+   (input.js no-ops gameplay handlers while editingControls is true) */
 body.mobile.customizing #touch{display:block;}
-body.customizing #touch{pointer-events:none;}
+body.customizing #touch .tbtn{touch-action:none;}
+body.customizing #stickBase{pointer-events:auto;touch-action:none;}
+.tbtn.ctlSel, #stickBase.ctlSel{outline:3px solid #7be07b;outline-offset:2px;box-shadow:0 0 16px rgba(123,224,123,.6);}
 .tbtn{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:92px;height:92px;border-radius:50%;pointer-events:auto;
   background:radial-gradient(circle at 50% 36%,rgba(246,241,231,.22),rgba(14,42,71,.34));
   border:2.5px solid rgba(212,175,55,.65);color:var(--gold);

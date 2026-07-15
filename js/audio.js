@@ -49,10 +49,13 @@ const SFX = {
   /* fireball: an airy descending whoosh + a tiny bright sparkle (not the old
      low sawtooth buzz, which read as a rude noise) */
   fire : () => { beep(760, .17, 'sine', .09, -440); setTimeout(() => beep(1180, .05, 'triangle', .05, -320), 10); },
-  hit  : () => beep(150, .28, 'sawtooth',.15, -90),
+  /* enemy spotted you / "!" alert: a crisp rising two-tone blip, not the old
+     low sawtooth buzz that read as a rude noise */
+  hit  : () => { beep(560, .05, 'square', .09, +150); setTimeout(() => beep(840, .09, 'square', .08, +60), 55); },
   /* stomp: a bouncy pop + a crisp tick, so landing on a foe feels springy */
   stomp: () => { beep(200, .09, 'sine', .14, +170); setTimeout(() => beep(660, .06, 'triangle', .07, -240), 10); },
-  hurt : () => beep(120, .35, 'sawtooth',.16, -60),
+  /* player takes damage: a short punchy "oof" (square hit + low sine thud) */
+  hurt : () => { beep(300, .12, 'square', .15, -150); setTimeout(() => beep(150, .12, 'sine', .12, -40), 18); },
   chest: () => { beep(600, .1, 'triangle', .12); setTimeout(() => beep(900, .16, 'triangle', .12), 90); },
   check: () => { beep(520, .12, 'triangle', .11); setTimeout(() => beep(780, .18, 'triangle', .11), 110); },
   boss : () => beep(90, .5, 'sawtooth', .18, -30),

@@ -110,15 +110,16 @@
 <div class="overlay hidden" id="controlsOv">
   <div class="ctlPanel">
     <div class="ctlPanelTitle" data-i18n="controls.title">تخصيص أزرار التحكم</div>
-    <div class="ctlPanelHint" data-i18n="controls.hint">غيّر الحجم وجهة اليد — الأزرار تتحدّث مباشرة.</div>
+    <div class="ctlPanelHint" data-i18n="controls.hint">اسحب أي زر أو العصا لتغيير مكانه، واضغطه ثم استخدم شريط الحجم.</div>
     <div class="ctlRow">
-      <span class="ctlRowLabel" data-i18n="controls.size">حجم الأزرار</span>
-      <input type="range" id="ctlSizeAll" min="0.7" max="1.4" step="0.05">
+      <span class="ctlRowLabel"><span data-i18n="controls.size">الحجم</span>&nbsp;<span id="ctlSelIcon">⬆</span></span>
+      <input type="range" id="ctlSizeSel" min="0.6" max="1.6" step="0.05">
       <span id="ctlSizeVal" class="ctlVal">100%</span>
     </div>
     <div class="ctlRow">
-      <span class="ctlRowLabel" data-i18n="controls.hand">جهة التحكم</span>
-      <button class="btn ghost" id="ctlMirrorBtn">🕹 الحركة يسار / الأزرار يمين</button>
+      <span class="ctlRowLabel" data-i18n="controls.opacity">الشفافية</span>
+      <input type="range" id="ctlOpacity" min="0.3" max="1" step="0.05">
+      <span id="ctlOpacityVal" class="ctlVal">100%</span>
     </div>
     <div class="ctlBtns">
       <button class="btn ghost" id="controlsResetBtn" data-i18n="controls.reset">إعادة الضبط</button>
