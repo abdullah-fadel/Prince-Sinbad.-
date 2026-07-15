@@ -165,16 +165,23 @@ function drawHero(){
     const fx = 22 + jab * 12, fy = -62 - raise * 2;    // fist, reaching forward at chest
     ctx.save();
     /* When real "Swing Arms" cast frames are present the body already shows
-       the raised arm, so only the flame is drawn. Otherwise fake the raised
-       forearm + fist (robe-sleeve cream) so it reads as his own arm. */
+       the raised arm, so only the flame is drawn. Otherwise draw the raised
+       arm to match his actual anatomy — a red-cloak upper arm, a bare tan
+       forearm and a tan fist — so it reads as HIS arm, not a foreign limb. */
     if (!heroFireReady()){
-      const elx = 8, ely = -56 - raise * 4;            // elbow, at the chest
+      const shx = -3, shy = -82;                       // shoulder (under the red cloak)
+      const elx = 9, ely = -60 - raise * 4;            // elbow, rising toward the chest
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#efe7d3'; ctx.lineWidth = 12; // upper-arm + forearm as one robe sleeve
-      ctx.beginPath(); ctx.moveTo(-2, -80); ctx.lineTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
-      ctx.strokeStyle = 'rgba(150,120,80,.28)'; ctx.lineWidth = 4;  // soft fold shade
+      ctx.strokeStyle = 'rgba(35,18,10,.5)'; ctx.lineWidth = 15;    // soft dark base for depth
+      ctx.beginPath(); ctx.moveTo(shx, shy); ctx.lineTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
+      ctx.strokeStyle = '#9e2a22'; ctx.lineWidth = 13;             // upper arm — red cloak sleeve
+      ctx.beginPath(); ctx.moveTo(shx, shy); ctx.lineTo(elx, ely); ctx.stroke();
+      ctx.strokeStyle = '#cd9760'; ctx.lineWidth = 11;             // forearm — bare skin
       ctx.beginPath(); ctx.moveTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
-      ctx.fillStyle = '#c99b6e'; ctx.beginPath(); ctx.arc(fx, fy, 6.5, 0, 7); ctx.fill();  // fist
+      ctx.strokeStyle = 'rgba(120,80,40,.35)'; ctx.lineWidth = 3;  // muscle shade
+      ctx.beginPath(); ctx.moveTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
+      ctx.fillStyle = '#cd9760'; ctx.beginPath(); ctx.arc(fx, fy, 7, 0, 7); ctx.fill();  // fist
+      ctx.strokeStyle = 'rgba(120,80,40,.5)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(fx, fy, 7, 0, 7); ctx.stroke();
     }
     /* flame off the fist, swelling as the cast releases */
     const R = 9 + jab * 17;
