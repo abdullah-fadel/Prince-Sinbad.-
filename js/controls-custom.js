@@ -1,169 +1,108 @@
 "use strict";
 /* =========================================================
-   controls-custom.js — draggable/resizable touch controls.
-   Persists button positions/sizes + the joystick zone rect to
-   localStorage and applies them on load. Loaded right after
-   input.js so this stays focused purely on *placing* controls;
-   input.js still owns reading their state.
-
-   Layout coordinates:
-   - btnJ/btnD/btnA/btnF: {x,y,s} — x,y are the button's CENTER
-     as a fraction (0..1) of the viewport; s scales its size.
-   - stick: {x,y,w,h,s} — x,y are the zone rectangle's TOP-LEFT
-     corner (fractions), w,h its size (fractions); s scales the
-     cosmetic joystick base/knob shown while actually pressed.
+   controls-custom.js — simple, modern touch-control tuning.
+   Two knobs only: a global SIZE scale and a HANDEDNESS mirror
+   (swap the movement joystick and the action-button cluster
+   left↔right). No per-button dragging — the edit screen shows
+   the real controls and updates them live. Prefs persist to
+   localStorage; input.js still owns reading control state.
    ========================================================= */
 
 const CONTROLS_KEY = 'db_controls';
 const BTN_IDS = ['btnJ', 'btnD', 'btnA', 'btnF'];
 
-/* Default control scheme (fractions of a landscape touch viewport):
-   movement joystick on the LEFT, all four action buttons clustered on the
-   RIGHT so one thumb steers while the other jumps/attacks. Jump sits at the
-   bottom-right (where the thumb rests) and is slightly larger. */
+/* base scheme (fractions of a landscape touch viewport): joystick on the
+   LEFT, action buttons clustered on the RIGHT, jump largest at bottom-right.
+   The mirror pref flips x across the screen for left/right-handed players. */
 const DEFAULT_LAYOUT = {
-  v: 1,
   btnJ:  { x: 0.90, y: 0.83, s: 1.15 },  // jump — primary, bottom-right
   btnA:  { x: 0.93, y: 0.55, s: 1 },     // sword — upper right
   btnF:  { x: 0.76, y: 0.63, s: 1 },     // fireball — inner upper
   btnD:  { x: 0.73, y: 0.88, s: 1 },     // roll — inner lower
-  stick: { x: 0.02, y: 0.30, w: 0.44, h: 0.68, s: 1 }
+  stick: { x: 0.02, y: 0.30, w: 0.44, h: 0.68 }
 };
 
-function loadControlLayout(){
+function loadPrefs(){
   try{
-    const raw = localStorage.getItem(CONTROLS_KEY);
-    console.log('[controls] load: raw localStorage.' + CONTROLS_KEY + ' =', raw);
-    const s = JSON.parse(raw);
-    return (s && s.v === 1) ? s : null;
-  }
-  catch(e){ console.log('[controls] load: parse failed', e); return null; }
+    const s = JSON.parse(localStorage.getItem(CONTROLS_KEY));
+    if (s && s.v === 2) return { scale: Math.min(1.4, Math.max(0.7, s.scale || 1)), mirror: !!s.mirror };
+  }catch(e){}
+  return { scale: 1, mirror: false };   // includes migrating away from the old v:1 drag layout
 }
-function saveControlLayout(l){
-  localStorage.setItem(CONTROLS_KEY, JSON.stringify(l));
-  console.log('[controls] save: wrote localStorage.' + CONTROLS_KEY + ' =', localStorage.getItem(CONTROLS_KEY));
-}
+function savePrefs(p){ localStorage.setItem(CONTROLS_KEY, JSON.stringify({ v: 2, scale: p.scale, mirror: p.mirror })); }
 
-/* applies a layout to the REAL gameplay controls. Uses plain left/top
-   (position minus half the current size) rather than a transform, so
-   it never fights the existing .tbtn.on{transform:scale(.94)} press
-   feedback, which stays entirely untouched. */
-function applyControlLayout(layout){
-  const L = layout || loadControlLayout() || DEFAULT_LAYOUT;
+/* applies a {scale, mirror} pref to the REAL gameplay controls. Uses plain
+   left/top so it never fights the .tbtn.on{transform:scale} press feedback. */
+function applyControlLayout(pref){
+  const P0 = pref || loadPrefs();
+  const scale = P0.scale, mirror = P0.mirror;
   for (const id of BTN_IDS){
-    const el = document.getElementById(id), c = L[id];
-    const size = 92 * c.s;
+    const el = document.getElementById(id), c = DEFAULT_LAYOUT[id];
+    const size = 92 * c.s * scale;
+    const x = mirror ? (1 - c.x) : c.x;
     el.style.width = el.style.height = size + 'px';
-    el.style.left = (c.x * innerWidth - size / 2) + 'px';
+    el.style.left = (x * innerWidth - size / 2) + 'px';
     el.style.top  = (c.y * innerHeight - size / 2) + 'px';
     el.style.right = el.style.bottom = 'auto';
   }
-  const zx = document.getElementById('stickZone'), sc = L.stick;
-  zx.style.left = (sc.x * innerWidth) + 'px';
+  const zx = document.getElementById('stickZone'), sc = DEFAULT_LAYOUT.stick;
+  const zxX = mirror ? (1 - sc.x - sc.w) : sc.x;
+  zx.style.left = (zxX * innerWidth) + 'px';
   zx.style.top  = (sc.y * innerHeight) + 'px';
   zx.style.width  = (sc.w * innerWidth) + 'px';
   zx.style.height = (sc.h * innerHeight) + 'px';
   zx.style.right = zx.style.bottom = 'auto';
-  document.documentElement.style.setProperty('--stick-base', (96 * sc.s) + 'px');
-  document.documentElement.style.setProperty('--stick-knob', (42 * sc.s) + 'px');
-  document.documentElement.style.setProperty('--stick-max',  (34 * sc.s) + 'px');
+  document.documentElement.style.setProperty('--stick-base', (112 * scale) + 'px');
+  document.documentElement.style.setProperty('--stick-knob', (50 * scale) + 'px');
+  document.documentElement.style.setProperty('--stick-max',  (40 * scale) + 'px');
+
+  /* while customizing, park a ghost joystick at the zone centre so its size
+     and side are visible (the real one only appears under a live thumb) */
+  if (document.body.classList.contains('customizing') && typeof stickBase !== 'undefined'){
+    const cx = (zxX + sc.w / 2) * innerWidth, cy = (sc.y + sc.h / 2) * innerHeight;
+    stickBase.style.left = cx + 'px'; stickBase.style.top = cy + 'px';
+    knobEl.style.left = cx + 'px'; knobEl.style.top = cy + 'px';
+    knobEl.style.transform = 'translate(-50%, -50%)';
+    stickBase.classList.add('on'); knobEl.classList.add('on');
+  }
 }
 addEventListener('resize', () => applyControlLayout());
 applyControlLayout();
 
 /* ---------------- edit mode ---------------- */
-let draftLayout = null;
-const stage = document.getElementById('ctlStage');
-const zoneProxy = document.getElementById('ctlZoneProxy');
-const zoneHandle = document.getElementById('ctlZoneHandle');
-const btnProxies = {};
-document.querySelectorAll('.ctlProxy').forEach(el => { btnProxies[el.dataset.id] = el; });
-const sizeSliders = {};
-document.querySelectorAll('.ctlSizeSlider').forEach(el => { sizeSliders[el.dataset.id] = el; });
+let draft = null;
+const sizeSlider = document.getElementById('ctlSizeAll');
+const sizeVal    = document.getElementById('ctlSizeVal');
+const mirrorBtn  = document.getElementById('ctlMirrorBtn');
 
-function cloneLayout(l){ return JSON.parse(JSON.stringify(l)); }
-
-function positionProxies(){
-  for (const id of BTN_IDS){
-    const c = draftLayout[id], el = btnProxies[id];
-    el.style.left = (c.x * 100) + '%'; el.style.top = (c.y * 100) + '%';
-  }
-  const sc = draftLayout.stick;
-  zoneProxy.style.left = (sc.x * 100) + '%'; zoneProxy.style.top = (sc.y * 100) + '%';
-  zoneProxy.style.width = (sc.w * 100) + '%'; zoneProxy.style.height = (sc.h * 100) + '%';
-  for (const id of [...BTN_IDS, 'stick']) sizeSliders[id].value = draftLayout[id].s;
+function refreshEditUI(){
+  sizeSlider.value = draft.scale;
+  sizeVal.textContent = Math.round(draft.scale * 100) + '%';
+  mirrorBtn.textContent = t(draft.mirror ? 'controls.handRight' : 'controls.handLeft');
 }
-
 function enterEditMode(){
-  draftLayout = cloneLayout(loadControlLayout() || DEFAULT_LAYOUT);
-  positionProxies();
+  draft = loadPrefs();
+  document.body.classList.add('customizing');
+  refreshEditUI();
+  applyControlLayout(draft);
   show('controlsOv');
 }
-
-/* drag a button proxy: its x/y follow the pointer 1:1 within the stage */
-function dragProxy(el, id){
-  el.addEventListener('pointerdown', e => {
-    e.preventDefault(); e.stopPropagation(); el.setPointerCapture(e.pointerId);
-    const move = ev => {
-      const r = stage.getBoundingClientRect();
-      draftLayout[id].x = Math.min(0.97, Math.max(0.03, (ev.clientX - r.left) / r.width));
-      draftLayout[id].y = Math.min(0.97, Math.max(0.03, (ev.clientY - r.top) / r.height));
-      positionProxies(); applyControlLayout(draftLayout);
-    };
-    const up = () => { el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); };
-    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up);
-  });
+function exitEditMode(){
+  document.body.classList.remove('customizing');
+  if (typeof stickBase !== 'undefined'){ stickBase.classList.remove('on'); knobEl.classList.remove('on'); }
 }
-BTN_IDS.forEach(id => dragProxy(btnProxies[id], id));
 
-/* drag the joystick zone's body: moves the whole rect, clamped so it stays on-stage */
-zoneProxy.addEventListener('pointerdown', e => {
-  if (e.target === zoneHandle) return; // the resize handle owns its own drag
-  e.preventDefault(); zoneProxy.setPointerCapture(e.pointerId);
-  const r = stage.getBoundingClientRect();
-  const startX = (e.clientX - r.left) / r.width, startY = (e.clientY - r.top) / r.height;
-  const origX = draftLayout.stick.x, origY = draftLayout.stick.y;
-  const move = ev => {
-    const px = (ev.clientX - r.left) / r.width, py = (ev.clientY - r.top) / r.height;
-    const sc = draftLayout.stick;
-    sc.x = Math.min(1 - sc.w, Math.max(0, origX + (px - startX)));
-    sc.y = Math.min(1 - sc.h, Math.max(0, origY + (py - startY)));
-    positionProxies(); applyControlLayout(draftLayout);
-  };
-  const up = () => { zoneProxy.removeEventListener('pointermove', move); zoneProxy.removeEventListener('pointerup', up); };
-  zoneProxy.addEventListener('pointermove', move); zoneProxy.addEventListener('pointerup', up);
-});
-
-/* resize the joystick zone from its bottom-right corner handle, anchored at top-left */
-zoneHandle.addEventListener('pointerdown', e => {
-  e.preventDefault(); e.stopPropagation(); zoneHandle.setPointerCapture(e.pointerId);
-  const r = stage.getBoundingClientRect();
-  const move = ev => {
-    const sc = draftLayout.stick;
-    const px = (ev.clientX - r.left) / r.width, py = (ev.clientY - r.top) / r.height;
-    sc.w = Math.min(1 - sc.x, Math.max(0.20, px - sc.x));
-    sc.h = Math.min(1 - sc.y, Math.max(0.20, py - sc.y));
-    positionProxies(); applyControlLayout(draftLayout);
-  };
-  const up = () => { zoneHandle.removeEventListener('pointermove', move); zoneHandle.removeEventListener('pointerup', up); };
-  zoneHandle.addEventListener('pointermove', move); zoneHandle.addEventListener('pointerup', up);
-});
-
-/* size sliders (one per button + one for the joystick's cosmetic scale) */
-for (const id of [...BTN_IDS, 'stick']){
-  sizeSliders[id].addEventListener('input', () => {
-    draftLayout[id].s = +sizeSliders[id].value;
-    applyControlLayout(draftLayout);
-  });
-}
+sizeSlider.addEventListener('input', () => { draft.scale = +sizeSlider.value; refreshEditUI(); applyControlLayout(draft); });
+mirrorBtn.addEventListener('click', () => { draft.mirror = !draft.mirror; refreshEditUI(); applyControlLayout(draft); if (typeof buzz === 'function') buzz(10); });
 
 document.getElementById('customizeBtn').onclick = enterEditMode;
 document.getElementById('controlsResetBtn').onclick = () => {
-  draftLayout = cloneLayout(DEFAULT_LAYOUT);
-  positionProxies(); applyControlLayout(draftLayout);
+  draft = { scale: 1, mirror: false };
+  refreshEditUI(); applyControlLayout(draft);
 };
 document.getElementById('controlsDoneBtn').onclick = () => {
-  saveControlLayout(draftLayout);
+  savePrefs(draft);
+  exitEditMode();
   applyControlLayout();
   show('settingsOv');
 };

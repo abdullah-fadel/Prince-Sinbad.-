@@ -43,7 +43,7 @@ const P = {
   jumps:0, coyote:0, jbuf:0, cut:false, squash:0, stretch:0,
   hp:3, maxHp:3, inv:0, fire:5, cool:0, anim:0, state:'idle',
   dead:false, climb:false, winWalk:false, atkT:0, stepT:0, dropDown:false,
-  swordT:0, swordCool:0, rollT:0, rollCool:0, rollDir:1, bombs:1
+  swordT:0, swordCool:0, rollT:0, rollCool:0, rollDir:1, bombs:1, punchT:0
 };
 
 function tileAt(c, r){ if (r < 0 || c < 0 || r >= G.H || c >= G.W) return '#'; return G.grid[r][c]; }

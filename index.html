@@ -108,24 +108,23 @@
 </div>
 
 <div class="overlay hidden" id="controlsOv">
-  <div class="title" style="font-size:32px;" data-i18n="controls.title">تخصيص أزرار التحكم</div>
-  <div class="subtitle" style="font-size:14px;margin-bottom:6px;" data-i18n="controls.hint">اسحب أي زر أو منطقة العصا لتغيير مكانها، واستخدم الشريط لتكبيرها أو تصغيرها.</div>
-  <div id="ctlStage">
-    <div class="ctlZoneProxy" id="ctlZoneProxy"><div class="ctlHandle" id="ctlZoneHandle"></div></div>
-    <div class="ctlProxy" data-id="btnJ">⬆</div>
-    <div class="ctlProxy" data-id="btnD">💨▼</div>
-    <div class="ctlProxy" data-id="btnA">⚔</div>
-    <div class="ctlProxy" data-id="btnF">🔥</div>
+  <div class="ctlPanel">
+    <div class="ctlPanelTitle" data-i18n="controls.title">تخصيص أزرار التحكم</div>
+    <div class="ctlPanelHint" data-i18n="controls.hint">غيّر الحجم وجهة اليد — الأزرار تتحدّث مباشرة.</div>
+    <div class="ctlRow">
+      <span class="ctlRowLabel" data-i18n="controls.size">حجم الأزرار</span>
+      <input type="range" id="ctlSizeAll" min="0.7" max="1.4" step="0.05">
+      <span id="ctlSizeVal" class="ctlVal">100%</span>
+    </div>
+    <div class="ctlRow">
+      <span class="ctlRowLabel" data-i18n="controls.hand">جهة التحكم</span>
+      <button class="btn ghost" id="ctlMirrorBtn">🕹 الحركة يسار / الأزرار يمين</button>
+    </div>
+    <div class="ctlBtns">
+      <button class="btn ghost" id="controlsResetBtn" data-i18n="controls.reset">إعادة الضبط</button>
+      <button class="btn" id="controlsDoneBtn" data-i18n="controls.done">تم</button>
+    </div>
   </div>
-  <div id="ctlSliders">
-    <label>⬆ <input type="range" class="ctlSizeSlider" data-id="btnJ" min="0.6" max="1.6" step="0.05"></label>
-    <label>💨▼ <input type="range" class="ctlSizeSlider" data-id="btnD" min="0.6" max="1.6" step="0.05"></label>
-    <label>⚔ <input type="range" class="ctlSizeSlider" data-id="btnA" min="0.6" max="1.6" step="0.05"></label>
-    <label>🔥 <input type="range" class="ctlSizeSlider" data-id="btnF" min="0.6" max="1.6" step="0.05"></label>
-    <label>🕹 <input type="range" class="ctlSizeSlider" data-id="stick" min="0.6" max="1.6" step="0.05"></label>
-  </div>
-  <button class="btn ghost" id="controlsResetBtn" data-i18n="controls.reset">إعادة الضبط الافتراضي</button>
-  <button class="btn" id="controlsDoneBtn" data-i18n="controls.done">تم</button>
 </div>
 
 <script src="js/i18n.js"></script>

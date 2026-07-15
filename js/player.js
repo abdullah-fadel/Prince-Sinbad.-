@@ -195,12 +195,15 @@ function updatePlayer(dt){
   const fp = inF();
   P.cool -= dt;
   if (fp && !fHeld && P.cool <= 0 && P.fire > 0 && P.rollT <= 0 && P.swordT <= 0){
-    P.fire--; P.cool = .38; SFX.fire();
-    G.fireballs.push({ x:P.x + P.w / 2 + P.face * 20, y:P.y + 22, vx:P.face * 520, vy:0, t:0, r:11 });
-    P.state = 'attack'; P.atkT = .25;
+    P.fire--; P.cool = .38; SFX.fire(); buzz(12);
+    /* spawn from the hero's raised fist (chest height, forward), matching the
+       casting-arm pose drawn in drawHero — not from the hip/back */
+    G.fireballs.push({ x:P.x + P.w / 2 + P.face * 36, y:P.y - 4, vx:P.face * 520, vy:0, t:0, r:11 });
+    P.state = 'attack'; P.atkT = .28; P.punchT = .28;
   }
   fHeld = fp;
   if (P.atkT > 0) P.atkT -= dt;
+  if (P.punchT > 0) P.punchT -= dt;
 
   /* ---- tile interactions ---- */
   /* negative inset expands the probe box outward — used to detect a
