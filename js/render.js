@@ -344,14 +344,29 @@ function drawPlatforms(){
   }
 }
 
-/* ---- fireballs: glowing core + hot trail ---- */
+/* ---- fireballs: a flame that licks downward, so a shot fired from the
+   hero's hand height still visibly reaches low, ground-crawling enemies
+   (matches the downward hit reach in updateFireballs) ---- */
+const FIRE_TAIL = 30; // how far the flame tongue hangs below the core (px)
 function drawFireballs(){
   for (const f of G.fireballs){
-    const fg = ctx.createRadialGradient(f.x, f.y, 2, f.x, f.y, f.r + 8);
-    fg.addColorStop(0, '#fff3c0'); fg.addColorStop(.4, '#ffb03c'); fg.addColorStop(1, 'rgba(255,110,30,0)');
-    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(f.x, f.y, f.r + 8, 0, 7); ctx.fill();
-    ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.t * 10);
-    ctx.fillStyle = '#ffdf7e'; ctx.beginPath(); ctx.ellipse(0, 0, f.r * .62, f.r * .45, 0, 0, 7); ctx.fill();
+    const flick = Math.sin(f.t * 26) * 2.4;
+    ctx.save(); ctx.translate(f.x, f.y);
+    /* soft glow, biased downward to cover the full flame body */
+    const gl = ctx.createRadialGradient(0, FIRE_TAIL * .35, 2, 0, FIRE_TAIL * .35, f.r + FIRE_TAIL * .7);
+    gl.addColorStop(0, 'rgba(255,205,100,.55)'); gl.addColorStop(1, 'rgba(255,110,30,0)');
+    ctx.fillStyle = gl; ctx.beginPath();
+    ctx.ellipse(0, FIRE_TAIL * .35, f.r + 10, f.r + FIRE_TAIL * .7, 0, 0, 7); ctx.fill();
+    /* flame tongue: rounded head at the core, tapering to a point below */
+    const grd = ctx.createLinearGradient(0, -f.r, 0, f.r + FIRE_TAIL);
+    grd.addColorStop(0, '#fff3c0'); grd.addColorStop(.45, '#ffb03c'); grd.addColorStop(1, 'rgba(255,80,20,.10)');
+    ctx.fillStyle = grd; ctx.beginPath();
+    ctx.moveTo(0, -f.r - 2);
+    ctx.quadraticCurveTo(f.r + 3 + flick, f.r * .3, 0, f.r + FIRE_TAIL);
+    ctx.quadraticCurveTo(-f.r - 3 - flick, f.r * .3, 0, -f.r - 2);
+    ctx.fill();
+    /* bright core */
+    ctx.fillStyle = '#fff3c0'; ctx.beginPath(); ctx.arc(0, 0, f.r * .55, 0, 7); ctx.fill();
     ctx.restore();
   }
 }

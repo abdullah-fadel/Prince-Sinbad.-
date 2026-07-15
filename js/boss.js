@@ -166,9 +166,13 @@ function updateFireballs(dt){
     let dead = f.t > 1.6 || solid(tileAt(c, r));
 
     for (const e of G.ents){
+      /* horizontal like a normal circle, but the flame's downward tongue
+         (see drawFireballs) extends the vertical reach below the core, so a
+         hand-height shot still connects with short, ground-hugging foes
+         (scorpions, wolves) instead of sailing over them */
       if (GROUND_ENEMY_TYPES.has(e.t) && !e.dead &&
           Math.abs(f.x - (e.x + e.w / 2)) < e.w / 2 + f.r &&
-          Math.abs(f.y - (e.y + e.h / 2)) < e.h / 2 + f.r){
+          (f.y - f.r) < (e.y + e.h) && (f.y + f.r + 30) > e.y){
         hitEnemy(e, 1, f.x); dead = true;
         puff(f.x, f.y, 10, '#ff9a2e', 160, .4); break;
       }
