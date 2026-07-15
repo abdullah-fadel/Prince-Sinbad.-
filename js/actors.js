@@ -159,30 +159,20 @@ function drawHero(){
       ctx.restore();
     }
   } else if (P.punchT > 0){
+    /* No drawn arm: the fire simply emanates from the hero's own hand. When
+       real raised-arm cast frames are playing the flame sits at chest height;
+       otherwise it comes off his actual (lowered) hand in the static pose. */
     const pr = 1 - Math.max(0, P.punchT) / .28;
-    const jab = Math.sin(Math.min(1, pr) * Math.PI);   // forward thrust 0→1→0
-    const raise = Math.min(1, pr * 3);                 // arm snaps up to chest
-    const fx = 22 + jab * 12, fy = -62 - raise * 2;    // fist, reaching forward at chest
+    const jab = Math.sin(Math.min(1, pr) * Math.PI);
+    const fx = (heroFireReady() ? 26 : 24) + jab * 8;
+    const fy = heroFireReady() ? -62 : -47;            // chest vs. real lowered hand
     ctx.save();
-    /* When real "Swing Arms" cast frames are present the body already shows
-       the raised arm, so only the flame is drawn. Otherwise fake the raised
-       forearm + fist (robe-sleeve cream) so it reads as his own arm. */
-    if (!heroFireReady()){
-      const elx = 8, ely = -56 - raise * 4;            // elbow, at the chest
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#efe7d3'; ctx.lineWidth = 12; // upper-arm + forearm as one robe sleeve
-      ctx.beginPath(); ctx.moveTo(-2, -80); ctx.lineTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
-      ctx.strokeStyle = 'rgba(150,120,80,.28)'; ctx.lineWidth = 4;  // soft fold shade
-      ctx.beginPath(); ctx.moveTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
-      ctx.fillStyle = '#c99b6e'; ctx.beginPath(); ctx.arc(fx, fy, 6.5, 0, 7); ctx.fill();  // fist
-    }
-    /* flame off the fist, swelling as the cast releases */
-    const R = 9 + jab * 17;
-    const fg = ctx.createRadialGradient(fx + 5, fy, 2, fx + 5, fy, R);
+    const R = 9 + jab * 17;                            // flame swells as the cast releases
+    const fg = ctx.createRadialGradient(fx + 4, fy, 2, fx + 4, fy, R);
     fg.addColorStop(0, 'rgba(255,244,190,.95)');
     fg.addColorStop(.45, 'rgba(255,150,50,.85)');
     fg.addColorStop(1, 'rgba(255,90,20,0)');
-    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(fx + 5, fy, R, 0, 7); ctx.fill();
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(fx + 4, fy, R, 0, 7); ctx.fill();
     ctx.restore();
   }
   ctx.restore();
