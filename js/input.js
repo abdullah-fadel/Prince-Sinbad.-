@@ -26,12 +26,16 @@ let hapticsOn = localStorage.getItem(HAPTIC_KEY) !== '0';
 function setHaptics(on){ hapticsOn = !!on; localStorage.setItem(HAPTIC_KEY, on ? '1' : '0'); }
 function buzz(ms){ if (isTouch && hapticsOn && navigator.vibrate){ try{ navigator.vibrate(ms); }catch(e){} } }
 
+/* while the customize screen is open, the real buttons become drag targets
+   (see controls-custom.js) instead of driving gameplay input */
+let editingControls = false;
+
 /* touch buttons. T.U/T.Dn are the joystick's vertical (climb up / climb
    down + drop-through); the four action buttons drive J/A/F/D. */
 const T = { L:false, R:false, U:false, Dn:false, J:false, F:false, D:false, A:false };
 function bindT(id, k){
   const el = document.getElementById(id);
-  const on  = e => { e.preventDefault(); T[k] = true;  el.classList.add('on'); buzz(7); ac(); };
+  const on  = e => { if (editingControls) return; e.preventDefault(); T[k] = true;  el.classList.add('on'); buzz(7); ac(); };
   const off = e => { e.preventDefault(); T[k] = false; el.classList.remove('on'); };
   el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); on(e); });
   el.addEventListener('pointerup', off);
@@ -78,6 +82,7 @@ function stickHide(){
   stickBase.classList.remove('on'); knobEl.classList.remove('on');
 }
 stickZone.addEventListener('pointerdown', e => {
+  if (editingControls) return;   // customize screen owns the joystick as a drag target
   e.preventDefault(); stickZone.setPointerCapture(e.pointerId); stickShow(e.clientX, e.clientY); buzz(5); ac();
 });
 stickZone.addEventListener('pointermove', e => { if (stickOn && stickZone.hasPointerCapture(e.pointerId)) stickMove(e.clientX, e.clientY); });
