@@ -11,7 +11,10 @@
    ========================================================= */
 
 function loadSprite(src){ const img = new Image(); img.src = src; return img; }
-const HERO_RUN_FRAMES = 10, HERO_JUMP_FRAMES = 8, HERO_ROLL_FRAMES = 8;
+const HERO_RUN_FRAMES = 10, HERO_JUMP_FRAMES = 8, HERO_ROLL_FRAMES = 8, HERO_FIRE_FRAMES = 8;
+/* flip to true once img/hero_fire/fire_0..7.png exist (rendered from the
+   "Swing Arms" clip). Kept off by default so no missing-file requests fire. */
+const HERO_FIRE_ENABLED = false;
 const SPR = {
   hero: loadSprite('img/hero.png'),
   soldier: loadSprite('img/soldier.png'),
@@ -24,8 +27,16 @@ const SPR = {
   heroRun: Array.from({length: HERO_RUN_FRAMES}, (_, i) => loadSprite(`img/hero_run/run_${i}.png`)),
   heroJump: Array.from({length: HERO_JUMP_FRAMES}, (_, i) => loadSprite(`img/hero_jump/jump_${i}.png`)),
   heroRoll: Array.from({length: HERO_ROLL_FRAMES}, (_, i) => loadSprite(`img/hero_roll/roll_${i}.png`)),
+  /* fireball cast: frames rendered from the model's "Swing Arms" clip
+     (arm raised to chest). Drop transparent PNGs at img/hero_fire/fire_0..7.png
+     — same camera/scale as the run frames — and they play automatically;
+     until then heroFireReady() is false and drawHero fakes the arm instead. */
+  heroFire: HERO_FIRE_ENABLED ? Array.from({length: HERO_FIRE_FRAMES}, (_, i) => loadSprite(`img/hero_fire/fire_${i}.png`)) : [],
   sword: loadSprite('img/sword.png')
 };
+/* true once the optional cast frames have actually decoded (a missing file
+   leaves naturalWidth 0, so we transparently fall back to the drawn arm) */
+function heroFireReady(){ const a = SPR.heroFire[0]; return !!a && a.complete && a.naturalWidth > 0; }
 /* the sword sprite's own grip point (where the crossguard meets the
    handle), as a fraction of its width/height — the blade is drawn
    pivoting around this point so it swings naturally from the hand */
@@ -82,7 +93,13 @@ function drawHero(){
     ctx.translate(0, -55); ctx.rotate(spin); ctx.translate(0, 55);
   }
 
-  if (run){
+  if (P.punchT > 0 && heroFireReady()){
+    /* real "Swing Arms" cast frames when available — play them by cast
+       progress (the flame/fist effect is still drawn separately below) */
+    const prog = 1 - Math.max(0, P.punchT) / .28;
+    const frame = SPR.heroFire[Math.min(HERO_FIRE_FRAMES - 1, Math.floor(prog * HERO_FIRE_FRAMES))];
+    drawSprite(frame, 118);
+  } else if (run){
     const phase = ((stride / (2 * Math.PI)) % 1 + 1) % 1;
     const frame = SPR.heroRun[Math.floor(phase * HERO_RUN_FRAMES)];
     drawSprite(frame, 118);
@@ -142,24 +159,23 @@ function drawHero(){
       ctx.restore();
     }
   } else if (P.punchT > 0){
-    /* raised casting arm: the hero lifts his forearm to chest height and the
-       fire launches off his fist. The base hero is a rigid image (no arm rig
-       at runtime), so the forearm + fist are drawn over it in robe-sleeve
-       cream so they read as his own raised arm rather than a floating orb. */
     const pr = 1 - Math.max(0, P.punchT) / .28;
     const jab = Math.sin(Math.min(1, pr) * Math.PI);   // forward thrust 0→1→0
     const raise = Math.min(1, pr * 3);                 // arm snaps up to chest
-    const elx = 8, ely = -56 - raise * 4;              // elbow, at the chest
-    const fx = 22 + jab * 12, fy = -62 - raise * 2;    // fist, reaching forward
+    const fx = 22 + jab * 12, fy = -62 - raise * 2;    // fist, reaching forward at chest
     ctx.save();
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    /* upper-arm + forearm as one robe sleeve */
-    ctx.strokeStyle = '#efe7d3'; ctx.lineWidth = 12;
-    ctx.beginPath(); ctx.moveTo(-2, -80); ctx.lineTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
-    ctx.strokeStyle = 'rgba(150,120,80,.28)'; ctx.lineWidth = 4;   // soft fold shade
-    ctx.beginPath(); ctx.moveTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
-    /* fist */
-    ctx.fillStyle = '#c99b6e'; ctx.beginPath(); ctx.arc(fx, fy, 6.5, 0, 7); ctx.fill();
+    /* When real "Swing Arms" cast frames are present the body already shows
+       the raised arm, so only the flame is drawn. Otherwise fake the raised
+       forearm + fist (robe-sleeve cream) so it reads as his own arm. */
+    if (!heroFireReady()){
+      const elx = 8, ely = -56 - raise * 4;            // elbow, at the chest
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#efe7d3'; ctx.lineWidth = 12; // upper-arm + forearm as one robe sleeve
+      ctx.beginPath(); ctx.moveTo(-2, -80); ctx.lineTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
+      ctx.strokeStyle = 'rgba(150,120,80,.28)'; ctx.lineWidth = 4;  // soft fold shade
+      ctx.beginPath(); ctx.moveTo(elx, ely); ctx.lineTo(fx, fy); ctx.stroke();
+      ctx.fillStyle = '#c99b6e'; ctx.beginPath(); ctx.arc(fx, fy, 6.5, 0, 7); ctx.fill();  // fist
+    }
     /* flame off the fist, swelling as the cast releases */
     const R = 9 + jab * 17;
     const fg = ctx.createRadialGradient(fx + 5, fy, 2, fx + 5, fy, R);
