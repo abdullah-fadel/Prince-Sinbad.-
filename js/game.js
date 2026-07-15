@@ -103,6 +103,31 @@ function writeSave(){
 function clearSave(){ localStorage.removeItem(SAVE_KEY); }
 function refreshMenuButtons(){ $('continueBtn').classList.toggle('hidden', !loadSave()); }
 
+/* ---------- keys / stage-unlock progression ----------
+   The "keys" economy: 1 key for each distinct level cleared (first clear).
+   Keys are a running TOTAL that is never spent — a later stage unlocks once
+   the total reaches its `unlockKeys` threshold. Persisted separately from
+   the resume save so progression survives quitting a run. */
+const PROG_KEY = 'db_prog';
+function loadCleared(){
+  try{ const p = JSON.parse(localStorage.getItem(PROG_KEY));
+       if (p && p.v === 1 && Array.isArray(p.cleared)) return new Set(p.cleared); }
+  catch(e){}
+  return new Set();
+}
+let CLEARED = loadCleared();
+function saveCleared(){ localStorage.setItem(PROG_KEY, JSON.stringify({ v:1, cleared:[...CLEARED] })); }
+function totalKeys(){ return CLEARED.size; }
+function markCleared(idx){ if (!CLEARED.has(idx)){ CLEARED.add(idx); saveCleared(); } }
+function stageUnlocked(st){ return !!st && !st.future && totalKeys() >= (st.unlockKeys || 0); }
+function levelUnlocked(idx){
+  const st = STAGE_OF[idx];
+  if (!stageUnlocked(st)) return false;
+  const pos = st.levels.indexOf(idx);
+  if (pos <= 0) return true;                       // first level of an unlocked stage
+  return CLEARED.has(st.levels[pos - 1]);          // otherwise the previous level must be cleared
+}
+
 function continueGame(){
   const s = loadSave();
   if (!s) return startGame();
@@ -145,10 +170,10 @@ function refreshLangBtns(){
   $('langEnBtn').classList.toggle('active', lang === 'en');
 }
 
-/* ---------- world-map / level-select tree ----------
-   Renders the WORLD structure (maps → chapters → levels) into #mapsOv.
-   Playable levels are tappable and jump straight into a fresh run at
-   that level; future maps render as locked scaffold. */
+/* ---------- rich world-map screen (maps → stages → levels) ----------
+   Reference-style 3-panel layout: a maps list, a vertical stage path, and a
+   stage-detail panel with a level grid + Play button. Stages/maps gate on the
+   key total; tapping an unlocked level starts a fresh run there. */
 function levelIcon(idx){
   const L = LEVELS[idx];
   if (L.boss) return '👑';                               // final confrontation (princess)
@@ -157,54 +182,122 @@ function levelIcon(idx){
   return '⚔';                                            // ordinary level
 }
 function startAtLevel(idx){
+  if (!levelUnlocked(idx)) return;                 // ignore taps on locked levels
   G.coins = 0; G.score = 0; G.dispScore = 0; G.lives = 3;
   P.fire = 5; P.maxHp = 3; P.bombs = 1;
   G.cpDone = new Set(); G.won = false;
   loadLevel(idx); writeSave();
   G.state = 'play'; show(null); ac(); startMusic(); goFullscreen();
 }
-function buildMapsTree(){
-  const root = $('mapsTree'); root.textContent = '';
-  const playing = (G.state === 'play' || G.state === 'pause');
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+function stageCleared(st){ return st.levels.length > 0 && st.levels.every(i => CLEARED.has(i)); }
+function stageProgress(st){ return st.levels.filter(i => CLEARED.has(i)).length; }
+function mapCleared(m){ return m.chapters.reduce((n, c) => n + stageProgress(c), 0); }
+function mapTotal(m){ return m.chapters.reduce((n, c) => n + c.levels.length, 0); }
+
+/* selection state for the map screen */
+const mapsSel = { mapId: 'iraq', stage: 0 };
+
+function buildMapsScreen(){
+  $('mapsKeyCount').textContent = totalKeys();
+  const selMap = WORLD.find(m => m.id === mapsSel.mapId) || WORLD[0];
+  $('mapsScreenTitle').textContent = LT(selMap.name);
+
+  /* ----- left column: maps list + key summary ----- */
+  const list = $('mapsMaps'); list.textContent = '';
   for (const m of WORLD){
-    const mapEl = document.createElement('div');
-    mapEl.className = 'mapNode' + (m.future ? ' future' : '');
-    const head = document.createElement('div'); head.className = 'mapHead';
-    const nm = document.createElement('span'); nm.textContent = LT(m.name);
-    const badge = document.createElement('span'); badge.className = 'mapBadge';
-    const count = m.chapters.reduce((n, c) => n + c.levels.length, 0);
-    badge.textContent = m.future ? t('maps.locked') : t('maps.levelsCount', { v: count });
-    head.appendChild(nm); head.appendChild(badge); mapEl.appendChild(head);
-    for (const ch of m.chapters){
-      const chEl = document.createElement('div'); chEl.className = 'chapNode';
-      const chHead = document.createElement('div'); chHead.className = 'chapHead';
-      chHead.textContent = LT(ch.name); chEl.appendChild(chHead);
-      if (!ch.levels.length){
-        const soon = document.createElement('div'); soon.className = 'chapSoon';
-        soon.textContent = t('maps.locked'); chEl.appendChild(soon);
-      } else {
-        const row = document.createElement('div'); row.className = 'lvlRow';
-        for (const idx of ch.levels){
-          const isCur = playing && G.lvl === idx;
-          const btn = document.createElement('button');
-          btn.className = 'lvlNode' + (isCur ? ' current' : '');
-          const num = document.createElement('span'); num.className = 'lvlNum';
-          num.textContent = playPos(idx) + 1;
-          const label = document.createElement('span');
-          label.textContent = levelIcon(idx) + ' ' + LT(LEVELS[idx].name) +
-            (isCur ? ' (' + t('maps.current') + ')' : '');
-          btn.appendChild(num); btn.appendChild(label);
-          btn.onclick = () => startAtLevel(idx);
-          row.appendChild(btn);
-        }
-        chEl.appendChild(row);
-      }
-      mapEl.appendChild(chEl);
-    }
-    root.appendChild(mapEl);
+    const locked = m.future || totalKeys() < (m.unlockKeys || 0);
+    const card = el('button', 'mapCard' + (m.id === mapsSel.mapId ? ' sel' : '') + (locked ? ' locked' : ''));
+    card.appendChild(el('span', 'mapCardName', LT(m.name)));
+    const sub = el('span', 'mapCardSub');
+    sub.textContent = m.future ? t('maps.locked')
+      : locked ? '🔒 ' + t('maps.needKeys', { v: m.unlockKeys })
+      : t('maps.progress', { a: mapCleared(m), b: mapTotal(m) });
+    card.appendChild(sub);
+    if (!locked) card.onclick = () => { mapsSel.mapId = m.id; mapsSel.stage = 0; buildMapsScreen(); };
+    list.appendChild(card);
   }
+  const sum = el('div', 'keySummary');
+  sum.appendChild(el('div', 'keySummaryTitle', t('maps.keysTotal')));
+  sum.appendChild(el('div', 'keySummaryVal', '🔑 ' + totalKeys() + ' / ' + PLAY_ORDER.length));
+  sum.appendChild(el('div', 'keySummaryHint', t('maps.keysHint')));
+  list.appendChild(sum);
+
+  /* ----- center column: stage path ----- */
+  const path = $('mapsPath'); path.textContent = '';
+  selMap.chapters.forEach((st, si) => {
+    const node = el('button', 'stageNode' + (si === mapsSel.stage ? ' sel' : ''));
+    const unlocked = stageUnlocked(st);
+    const done = stageCleared(st);
+    const badge = el('span', 'stageBadge ' + (done ? 'done' : unlocked ? 'open' : 'lock'),
+                     done ? '✓' : unlocked ? (si + 1) : '🔒');
+    node.appendChild(badge);
+    node.appendChild(el('span', 'stageNodeName', LT(st.name)));
+    const prog = el('span', 'stageNodeProg');
+    prog.textContent = st.future ? t('maps.locked')
+      : unlocked ? stageProgress(st) + '/' + st.levels.length
+      : '🔒 ' + t('maps.needKeys', { v: st.unlockKeys });
+    node.appendChild(prog);
+    node.onclick = () => { mapsSel.stage = si; buildMapsScreen(); };
+    path.appendChild(node);
+    if (si < selMap.chapters.length - 1) path.appendChild(el('div', 'stagePathLink'));
+  });
+
+  /* ----- right column: selected-stage detail ----- */
+  buildStageDetail(selMap, selMap.chapters[mapsSel.stage]);
 }
-function openMaps(){ buildMapsTree(); show('mapsOv'); }
+
+function buildStageDetail(map, st){
+  const d = $('mapsDetail'); d.textContent = '';
+  if (!st){ return; }
+  d.appendChild(el('div', 'detailTitle', LT(st.name)));
+  d.appendChild(el('div', 'detailDesc', st.desc ? LT(st.desc) : ''));
+
+  const unlocked = stageUnlocked(st);
+  if (st.future || !st.levels.length){
+    d.appendChild(el('div', 'detailLocked', '🔒 ' + t('maps.locked')));
+    return;
+  }
+  if (!unlocked){
+    d.appendChild(el('div', 'detailLocked', '🔒 ' + t('maps.needKeys', { v: st.unlockKeys })));
+  }
+
+  d.appendChild(el('div', 'detailSection', t('maps.levels')));
+  const grid = el('div', 'lvlGrid');
+  const playing = (G.state === 'play' || G.state === 'pause');
+  st.levels.forEach((idx, pos) => {
+    const lu = levelUnlocked(idx), cl = CLEARED.has(idx), cur = playing && G.lvl === idx;
+    const b = el('button', 'lvlCell' + (cl ? ' cleared' : '') + (lu ? '' : ' locked') + (cur ? ' current' : ''));
+    b.appendChild(el('span', 'lvlCellNum', String(pos + 1)));
+    b.appendChild(el('span', 'lvlCellIcon', cl ? '✓' : lu ? levelIcon(idx) : '🔒'));
+    b.title = LT(LEVELS[idx].name);
+    if (lu) b.onclick = () => startAtLevel(idx);
+    grid.appendChild(b);
+  });
+  d.appendChild(grid);
+
+  /* Play button → next unbeaten unlocked level in the stage (or the first) */
+  const target = st.levels.find(i => levelUnlocked(i) && !CLEARED.has(i));
+  const play = el('button', 'btn detailPlay');
+  if (unlocked && target != null){
+    play.textContent = t('maps.play');
+    play.onclick = () => startAtLevel(target);
+  } else if (unlocked){
+    play.textContent = t('maps.replay');
+    play.onclick = () => startAtLevel(st.levels[0]);
+  } else {
+    play.textContent = '🔒 ' + t('maps.needKeys', { v: st.unlockKeys });
+    play.disabled = true; play.classList.add('disabled');
+  }
+  d.appendChild(play);
+}
+
+function openMaps(){
+  /* default the selection to the current level's stage when opened mid-run */
+  const st = STAGE_OF[G.lvl], m = MAP_OF[G.lvl];
+  if (m){ mapsSel.mapId = m.id; mapsSel.stage = Math.max(0, m.chapters.indexOf(st)); }
+  buildMapsScreen(); show('mapsOv');
+}
 
 /* fullscreen + landscape lock on mobile — best effort, failures are fine */
 function goFullscreen(){
@@ -228,6 +321,7 @@ function startGame(){
 }
 function levelComplete(){
   if (G.state !== 'play') return;
+  markCleared(G.lvl);                              // earns a key toward stage unlocks
   G.state = 'lvl'; G.score += Math.max(0, 1500 - Math.floor(G.time) * 10);
   G.dispScore = G.score;
   $('lvlStats').innerHTML =
@@ -240,6 +334,7 @@ function showOver(){
   show('overOv');
 }
 function showWin(){
+  markCleared(G.lvl);                              // the finale also counts as a cleared level
   G.state = 'win'; updateBest(); stopMusic(); clearSave();
   $('winStats').innerHTML =
     t('stats.score', { v: G.score }) + '<br>' + t('stats.coins', { v: G.coins }) + '<br>' + t('stats.livesLeft', { v: G.lives });
@@ -275,10 +370,13 @@ const quit = () => { G.state = 'menu'; stopMusic(); updateBest(); showBest(); re
 $('quitBtn').onclick = quit;
 $('quitBtn2').onclick = quit;
 $('nextBtn').onclick = () => {
-  /* advance along the chapter play-order, not the raw LEVELS index */
+  /* advance along the play-order; if the next level sits in a still-locked
+     stage (not enough keys), send the player to the map screen to see the
+     gate instead of forcing them into a locked level */
   const nxt = nextLevelIndex(G.lvl);
-  if (nxt >= 0){ loadLevel(nxt); writeSave(); G.state = 'play'; show(null); last = performance.now(); }
-  else showWin();
+  if (nxt < 0){ showWin(); return; }
+  if (!levelUnlocked(nxt)){ G.state = 'menu'; stopMusic(); openMaps(); return; }
+  loadLevel(nxt); writeSave(); G.state = 'play'; show(null); last = performance.now();
 };
 
 /* settings + language */
