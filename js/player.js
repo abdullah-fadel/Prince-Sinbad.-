@@ -196,9 +196,9 @@ function updatePlayer(dt){
   P.cool -= dt;
   if (fp && !fHeld && P.cool <= 0 && P.fire > 0 && P.rollT <= 0 && P.swordT <= 0){
     P.fire--; P.cool = .38; SFX.fire(); buzz(12);
-    /* spawn from the hero's extended fist (upper-front), matching the punch
-       pose + hand burst drawn in drawHero — not from the hip/back */
-    G.fireballs.push({ x:P.x + P.w / 2 + P.face * 36, y:P.y - 2, vx:P.face * 520, vy:0, t:0, r:11 });
+    /* spawn from the hero's raised fist (chest height, forward), matching the
+       casting-arm pose drawn in drawHero — not from the hip/back */
+    G.fireballs.push({ x:P.x + P.w / 2 + P.face * 36, y:P.y - 4, vx:P.face * 520, vy:0, t:0, r:11 });
     P.state = 'attack'; P.atkT = .28; P.punchT = .28;
   }
   fHeld = fp;
