@@ -99,11 +99,17 @@ function drawHero(){
     drawSprite(frame, 118);
   } else {
     /* no dedicated clip for this state — fake it on the static pose */
-    let yOff = 0, rot = 0;
-    if (P.swordT > 0 || P.state === 'attack') rot = -.16;
+    let yOff = 0, xOff = 0, rot = 0;
+    if (P.punchT > 0){
+      /* fireball "punch": a quick forward jab + lean, so the fire clearly
+         launches off the thrusting fist rather than drifting from the body */
+      const pr = 1 - Math.max(0, P.punchT) / .28;
+      const jab = Math.sin(Math.min(1, pr) * Math.PI);   // 0 → 1 → 0 over the throw
+      xOff = jab * 11; rot = -.08 - jab * .14;
+    } else if (P.swordT > 0 || P.state === 'attack') rot = -.16;
     else if (P.state === 'climb') yOff = Math.sin(t * 8) * 4;
     else if (P.state === 'idle') yOff = Math.sin(t * 2.2) * 1.5; // gentle idle bob
-    ctx.translate(0, yOff);
+    ctx.translate(xOff, yOff);
     ctx.rotate(rot);
     drawSprite(SPR.hero, 118);
   }
@@ -135,11 +141,21 @@ function drawHero(){
       ctx.drawImage(img, -px, -py, w, h);
       ctx.restore();
     }
-  } else if (P.state === 'attack'){
-    ctx.save(); ctx.translate(28, -68);
-    const fg = ctx.createRadialGradient(0, 0, 2, 0, 0, 20);
-    fg.addColorStop(0, 'rgba(255,170,60,.8)'); fg.addColorStop(1, 'rgba(255,170,60,0)');
-    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(0, 0, 20, 0, 7); ctx.fill();
+  } else if (P.punchT > 0){
+    /* fire bursting off the thrusting fist: a knuckle + a bright flame that
+       swells as the arm reaches full extension, positioned at the hand (the
+       body's punch lunge above already carried the whole pose forward) */
+    const pr = 1 - Math.max(0, P.punchT) / .28;
+    const jab = Math.sin(Math.min(1, pr) * Math.PI);
+    ctx.save(); ctx.translate(30 + jab * 8, -60);
+    ctx.fillStyle = '#c69a54';                        // fist / knuckle
+    ctx.beginPath(); ctx.arc(0, 0, 7, 0, 7); ctx.fill();
+    const R = 10 + jab * 17;                          // flame grows through the throw
+    const fg = ctx.createRadialGradient(6, 0, 2, 6, 0, R);
+    fg.addColorStop(0, 'rgba(255,244,190,.95)');
+    fg.addColorStop(.45, 'rgba(255,150,50,.85)');
+    fg.addColorStop(1, 'rgba(255,90,20,0)');
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(6, 0, R, 0, 7); ctx.fill();
     ctx.restore();
   }
   ctx.restore();

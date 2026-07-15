@@ -83,16 +83,10 @@ function pluck(freq, dur, vol, type = 'triangle'){
 function startMusic(){
   if (musicTimer) return;
   ac();
-  /* two soft sine drones a fifth apart (D2 + A2) for a warm bed */
-  try{
-    drones = [];
-    for (const [f, v] of [[73.42, .045], [110.0, .028]]){
-      const o = AC.createOscillator(), g = AC.createGain();
-      o.type = 'sine'; o.frequency.value = f; g.gain.value = v;
-      o.connect(g); g.connect(musicGain); o.start();
-      drones.push(o);
-    }
-  }catch(e){}
+  /* NOTE: no continuous drone bed — a constant low sine pair used to sit
+     under the music and read as an always-on "buzz/hum", so the mood now
+     comes purely from the plucked oud phrases + soft hand-drum below. */
+  drones = [];
   let step = 0, last = 4;
   musicTimer = setInterval(() => {
     if (G.state !== 'play') return;

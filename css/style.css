@@ -39,6 +39,10 @@ body.mobile .mobileOnly{display:inline-block;}
 /* ---------- touch controls ---------- */
 #touch{position:fixed;inset:0;z-index:30;pointer-events:none;display:none;}
 body.mobile.playing #touch{display:block;}
+/* while the customize sheet is open, show the real controls as a live
+   preview (non-interactive so taps don't drive the paused game) */
+body.mobile.customizing #touch{display:block;}
+body.customizing #touch{pointer-events:none;}
 .tbtn{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:92px;height:92px;border-radius:50%;pointer-events:auto;
   background:radial-gradient(circle at 50% 36%,rgba(246,241,231,.22),rgba(14,42,71,.34));
   border:2.5px solid rgba(212,175,55,.65);color:var(--gold);
@@ -87,35 +91,25 @@ body.playing #pauseBtn{display:block;}
   padding:10px 22px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;
   box-shadow:0 4px 0 #7a5e14,0 8px 18px rgba(0,0,0,.4);}
 
-/* ---------- control customization ---------- */
-/* a compact bird's-eye "phone screen" the user drags proxies around in —
-   proxy positions map 1:1 to the same x/y fractions applyControlLayout()
-   uses on the real full-screen buttons, so this stays simple while the
-   real buttons (behind the overlay) preview live. */
-/* #controlsOv's content (stage + 5 sliders + 2 buttons) is taller than
-   many real phones' landscape viewport height, so unlike every other
-   .overlay it must scroll instead of center-and-clip — otherwise the
-   Done button ends up below the visible screen and can never be
-   tapped, so nothing ever gets saved. See also: #ctlStage's width is
-   capped by a vh-based term below to shrink the whole editor on short
-   viewports and minimize how much scrolling is ever needed. */
-#controlsOv{justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;
-  touch-action:pan-y;padding-top:14px;padding-bottom:24px;}
-#ctlStage{position:relative;width:min(90vw,600px,calc(36vh * 16 / 9));aspect-ratio:16/9;margin:8px auto;
-  border:2px dashed rgba(212,175,55,.5);border-radius:12px;background:rgba(0,0,0,.15);touch-action:none;
-  flex-shrink:0;}
-.ctlProxy{position:absolute;width:15%;aspect-ratio:1;transform:translate(-50%,-50%);
-  border-radius:50%;background:rgba(212,175,55,.35);border:2px solid rgba(212,175,55,.9);
-  display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gold);
-  cursor:grab;user-select:none;touch-action:none;}
-.ctlProxy:active{cursor:grabbing;}
-.ctlZoneProxy{position:absolute;border:2px solid rgba(120,214,150,.8);background:rgba(120,214,150,.12);
-  border-radius:8px;cursor:move;touch-action:none;}
-.ctlHandle{position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;border-radius:50%;
-  background:rgba(120,214,150,.95);border:2px solid #fff;cursor:nwse-resize;touch-action:none;}
-#ctlSliders{display:flex;flex-direction:column;gap:4px;margin:6px 0 4px;width:min(90vw,420px);flex-shrink:0;}
-#ctlSliders label{display:flex;align-items:center;gap:10px;color:var(--cream);font-size:14px;}
-#ctlSliders input[type=range]{flex:1;}
+/* ---------- control customization (simple bottom sheet) ---------- */
+/* transparent overlay so the real controls stay visible behind it as a
+   live preview; only the bottom panel catches input. */
+#controlsOv{background:transparent;justify-content:flex-end;align-items:center;padding:0;pointer-events:none;
+  animation:none;}
+.ctlPanel{pointer-events:auto;width:100%;max-width:560px;margin:0 auto;
+  background:linear-gradient(180deg,rgba(8,16,28,.82),rgba(8,16,28,.96));
+  border:1.5px solid rgba(212,175,55,.5);border-bottom:none;border-radius:20px 20px 0 0;
+  padding:16px 22px calc(18px + env(safe-area-inset-bottom,0px));
+  box-shadow:0 -10px 34px rgba(0,0,0,.55);}
+.ctlPanelTitle{font-size:22px;font-weight:900;color:var(--gold);text-align:center;}
+.ctlPanelHint{font-size:13px;color:var(--cream);opacity:.75;text-align:center;margin:4px 0 14px;}
+.ctlRow{display:flex;align-items:center;gap:12px;margin:10px 0;}
+.ctlRowLabel{flex:0 0 auto;font-size:15px;font-weight:700;color:var(--cream);min-width:96px;}
+.ctlRow input[type=range]{flex:1;height:26px;accent-color:var(--gold);}
+.ctlVal{flex:0 0 auto;font-size:15px;font-weight:800;color:var(--gold);min-width:52px;text-align:center;}
+.ctlRow #ctlMirrorBtn{flex:1;margin:0;font-size:14px;padding:10px 12px;}
+.ctlBtns{display:flex;gap:10px;justify-content:center;margin-top:14px;}
+.ctlBtns .btn{margin:0;}
 
 /* ---------- world-map screen (maps → stages → levels) ---------- */
 #mapsOv{justify-content:flex-start;padding:0;overflow:hidden;}
