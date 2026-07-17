@@ -15,10 +15,11 @@ const HERO_RUN_FRAMES = 10, HERO_JUMP_FRAMES = 8, HERO_ROLL_FRAMES = 8, HERO_FIR
 /* flip to true once img/hero_fire/fire_0..7.png exist (rendered from the
    "Swing Arms" clip). Kept off by default so no missing-file requests fire. */
 const HERO_FIRE_ENABLED = false;
+const LEADER_IDLE_FRAMES = 6, LEADER_WALK_FRAMES = 8, LEADER_WINDUP_FRAMES = 6,
+      LEADER_SLAM_FRAMES = 5, LEADER_THROW_FRAMES = 6, LEADER_DEATH_FRAMES = 8;
 const SPR = {
   hero: loadSprite('img/hero.png'),
   soldier: loadSprite('img/soldier.png'),
-  leader: loadSprite('img/leader.png'),
   princess: loadSprite('img/princess.png'),
   /* real running/jumping/rolling animation frames, rendered from the
      rigged hero model (Jogging / Jump Up clips, and a hand-keyed tuck
@@ -32,7 +33,18 @@ const SPR = {
      — same camera/scale as the run frames — and they play automatically;
      until then heroFireReady() is false and drawHero fakes the arm instead. */
   heroFire: HERO_FIRE_ENABLED ? Array.from({length: HERO_FIRE_FRAMES}, (_, i) => loadSprite(`img/hero_fire/fire_${i}.png`)) : [],
-  sword: loadSprite('img/sword.png')
+  sword: loadSprite('img/sword.png'),
+  /* villain leader: real per-frame poses rendered from the uploaded
+     "Sword and Shield" rigged model+animation pack (idle/walk/power-up/
+     impact/casting/death clips) — actual skeleton and joints driving
+     each pose, matching the hero's run/jump/roll treatment instead of
+     transforming one static image */
+  leaderIdle: Array.from({length: LEADER_IDLE_FRAMES}, (_, i) => loadSprite(`img/leader_idle/idle_${i}.png`)),
+  leaderWalk: Array.from({length: LEADER_WALK_FRAMES}, (_, i) => loadSprite(`img/leader_walk/walk_${i}.png`)),
+  leaderWindup: Array.from({length: LEADER_WINDUP_FRAMES}, (_, i) => loadSprite(`img/leader_windup/windup_${i}.png`)),
+  leaderSlam: Array.from({length: LEADER_SLAM_FRAMES}, (_, i) => loadSprite(`img/leader_slam/slam_${i}.png`)),
+  leaderThrow: Array.from({length: LEADER_THROW_FRAMES}, (_, i) => loadSprite(`img/leader_throw/throw_${i}.png`)),
+  leaderDeath: Array.from({length: LEADER_DEATH_FRAMES}, (_, i) => loadSprite(`img/leader_death/death_${i}.png`))
 };
 /* true once the optional cast frames have actually decoded (a missing file
    leaves naturalWidth 0, so we transparently fall back to the drawn arm) */
@@ -355,7 +367,8 @@ function drawBoss(){
   const isWarlord = b.kind === 'warlord';
   if (!b.dead) drawShadow(b.x + b.w / 2, b.y + b.h, b.w);
   ctx.save(); ctx.translate(b.x + b.w / 2, b.y); ctx.scale(b.face, 1);
-  if (b.dead){
+  if (b.dead && isWarlord){
+    /* the warlord has no death clip, so it still fakes the fall */
     ctx.translate(0, Math.min(60, b.dead * 80));
     ctx.rotate(Math.min(1.4, b.dead * 1.6));
     ctx.globalAlpha = Math.max(0, 1 - b.dead * .5);
@@ -410,28 +423,45 @@ function drawBoss(){
     ctx.fillStyle = jewelCol; ctx.beginPath(); ctx.arc(4, -7 + wob + crouch, 3.2, 0, 7); ctx.fill();
     ctx.lineCap = 'butt';
   } else {
-    /* villain leader: real character-model sprite (base faces right; the
-       boss's ctx.scale(b.face,1) turns it toward the player). Motion is
-       faked on the rigid image — a heavy looming breath while idle, a
-       rear-back + red head-glow telegraph on the windup, and a forward
-       lunge on the slam. */
-    const hurt = b.hurt > 0, breathe = Math.sin(b.anim * 2.2);
-    const wind = b.windup > 0, slam = b.act === 'slam';
+    /* villain leader: real per-frame poses rendered from the uploaded
+       "Sword and Shield" rigged model — actual skeleton/joint motion
+       (idle sway, walk cycle, power-up windup, slam impact, blade-throw
+       lunge, death collapse) drive the sprite instead of one static
+       image being faked with a transform. */
+    const hurt = b.hurt > 0, tint = hurt ? 'rgba(255,150,130,.6)' : null;
     ctx.save();
-    ctx.translate(0, b.h);                       // origin at the feet
-    let rot = breathe * .03, rise = breathe * 2; // idle looming sway
-    if (wind){ rot = -.13; rise = -6 - Math.abs(Math.sin(b.windup * 30)) * 4; }
-    else if (slam){ rot = .15; rise = 5; }
-    ctx.translate(0, rise);
-    const s = 1 + breathe * .02;                 // breathing
-    ctx.scale(s, 2 - s);
-    ctx.rotate(rot);
-    if (wind){
-      const eg = ctx.createRadialGradient(6, -120, 4, 6, -120, 44);
+    ctx.translate(0, b.h); // origin at the feet
+
+    if (b.dead > 0){
+      const prog = Math.min(1, b.dead / 1.4);
+      const idx = Math.min(LEADER_DEATH_FRAMES - 1, Math.floor(prog * LEADER_DEATH_FRAMES));
+      ctx.globalAlpha = Math.max(0, 1 - Math.max(0, b.dead - 1.4) * .8);
+      drawSprite(SPR.leaderDeath[idx], 150, tint);
+    } else if (b.windup > 0){
+      const prog = 1 - b.windup / .35;
+      const idx = Math.min(LEADER_WINDUP_FRAMES - 1, Math.floor(prog * LEADER_WINDUP_FRAMES));
+      const eg = ctx.createRadialGradient(6, -120, 4, 6, -120, 44); // telegraph glow
       eg.addColorStop(0, 'rgba(255,90,40,.6)'); eg.addColorStop(1, 'rgba(255,90,40,0)');
       ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(6, -120, 44, 0, 7); ctx.fill();
+      drawSprite(SPR.leaderWindup[idx], 150, tint);
+    } else if (b.slamFxT > 0){
+      const prog = 1 - b.slamFxT / .4;
+      const idx = Math.min(LEADER_SLAM_FRAMES - 1, Math.floor(prog * LEADER_SLAM_FRAMES));
+      drawSprite(SPR.leaderSlam[idx], 150, tint);
+    } else if (b.act === 'slam'){
+      // airborne leap before landing — hold the fully wound-up strike pose
+      drawSprite(SPR.leaderWindup[LEADER_WINDUP_FRAMES - 1], 150, tint);
+    } else if (b.act === 'throw'){
+      const prog = 1 - Math.max(0, b.actT) / .9;
+      const idx = Math.min(LEADER_THROW_FRAMES - 1, Math.floor(prog * LEADER_THROW_FRAMES));
+      drawSprite(SPR.leaderThrow[idx], 150, tint);
+    } else if (b.act === 'walk'){
+      const idx = Math.floor(b.anim * 6.5) % LEADER_WALK_FRAMES;
+      drawSprite(SPR.leaderWalk[idx], 150, tint);
+    } else {
+      const idx = Math.floor(b.anim * 1.4) % LEADER_IDLE_FRAMES;
+      drawSprite(SPR.leaderIdle[idx], 150, tint);
     }
-    drawSprite(SPR.leader, 150, hurt ? 'rgba(255,150,130,.6)' : null);
     ctx.restore();
   }
   ctx.restore();

@@ -19,6 +19,7 @@ function updateBoss(dt){
   if (b.kind === 'warlord') return updateWarlordBoss(dt, b);
 
   b.anim += dt; b.hurt = Math.max(0, b.hurt - dt);
+  b.slamFxT = Math.max(0, (b.slamFxT || 0) - dt); // slam-impact sprite window
   b.barHp += (b.hp - b.barHp) * Math.min(1, dt * 3); // trailing HP bar
   if (G.cine > 0) return;
 
@@ -53,6 +54,7 @@ function updateBoss(dt){
   if (b.y >= gy){
     if (b.vy > 500 && b.act === 'slam'){
       G.shake = .5; G.hitstop = Math.max(G.hitstop, .07); SFX.boss();
+      b.slamFxT = .4; // play the impact sprite frames on landing
       ring(b.x + b.w / 2, gy + b.h, '#ffb03c', 90);
       for (const s of [-1, 1])
         b.blades.push({ x:b.x + b.w / 2, y:gy + b.h - 14, vx:s * 300, vy:0, t:0, r:12, ground:true });
