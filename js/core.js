@@ -15,14 +15,22 @@ const PAL = {
   babylon:   { body:'#2aa79f', body2:'#1c7f79', robe:'#b8912a', robeDark:'#8a6a12', turban:'#d4af37', turbanDark:'#8a6a12', mask:'#2a2410' },
   oasis:     { body:'#4a9a6a', body2:'#357a4e', robe:'#c9a15a', robeDark:'#8a6a2e', turban:'#2f8a7a', turbanDark:'#1f5a4e', mask:'#20301c' },
   sandyCaves:{ body:'#9a8064', body2:'#7a6248', robe:'#6a5a48', robeDark:'#3a2f24', turban:'#8a6a4a', turbanDark:'#5a4530', mask:'#2a221a' },
-  egypt:     { body:'#4a8a3a', body2:'#356a2a', robe:'#c9a24a', robeDark:'#8a6a1e', turban:'#2f8a7a', turbanDark:'#1f5a4e', mask:'#20301c' }
+  egypt:     { body:'#4a8a3a', body2:'#356a2a', robe:'#c9a24a', robeDark:'#8a6a1e', turban:'#2f8a7a', turbanDark:'#1f5a4e', mask:'#20301c' },
+  /* Levant biomes — Damascus dusk stone, deep cedar green, icy peaks */
+  damascus:  { body:'#7a4a6a', body2:'#5c3652', robe:'#8a5a7a', robeDark:'#4a2c40', turban:'#a04a5a', turbanDark:'#743040', mask:'#2a1c26' },
+  cedar:     { body:'#3a6a4e', body2:'#28503a', robe:'#3a5c40', robeDark:'#1e3626', turban:'#2a6a50', turbanDark:'#1a4634', mask:'#182a1e' },
+  snow:      { body:'#8fa4bd', body2:'#6e8098', robe:'#7a8aa2', robeDark:'#48566a', turban:'#5a7a9a', turbanDark:'#3c5470', mask:'#26303c' }
 };
 /* ground-enemy types sharing the same patrol/vision/damage plumbing —
    check membership here rather than repeating `e.t==='x'||e.t==='y'`
    conditions across enemies.js/player.js/boss.js */
-const GROUND_ENEMY_TYPES = new Set(['scorp', 'bandit', 'wolf', 'elite', 'thrower', 'mummy', 'snake']);
+const GROUND_ENEMY_TYPES = new Set(['scorp', 'bandit', 'wolf', 'elite', 'thrower', 'mummy', 'snake', 'shieldman', 'leopard']);
+/* every enemy the player's sword/fireballs can hit — the ground roster plus
+   the flying falcon (which has its own non-gravity movement branch) */
+function enemyHittable(t){ return GROUND_ENEMY_TYPES.has(t) || t === 'falcon'; }
 function enemyPoints(t){
-  return t === 'scorp' ? 200 : t === 'wolf' ? 250 : t === 'snake' ? 260 : t === 'thrower' ? 350 :
+  return t === 'scorp' ? 200 : t === 'wolf' ? 250 : t === 'snake' ? 260 : t === 'falcon' ? 280 :
+         t === 'leopard' ? 320 : t === 'thrower' ? 350 : t === 'shieldman' ? 400 :
          t === 'mummy' ? 450 : t === 'elite' ? 800 : 300; // bandit/default
 }
 /* a level's exit door stays locked while ANY elite guard is still alive —
@@ -85,6 +93,9 @@ function loadLevel(i){
     if (ch === 'Y'){ G.ents.push(mkThrower(x, y, pal)); G.grid[r][c] = ' '; }
     if (ch === 'U'){ G.ents.push(mkMummy(x, y, pal));  G.grid[r][c] = ' '; }
     if (ch === 'N'){ G.ents.push(mkSnake(x, y, pal));  G.grid[r][c] = ' '; }
+    if (ch === 'A'){ G.ents.push(mkFalcon(x, y, pal)); G.grid[r][c] = ' '; }
+    if (ch === 'Q'){ G.ents.push(mkShieldman(x, y, pal)); G.grid[r][c] = ' '; }
+    if (ch === 'J'){ G.ents.push(mkLeopard(x, y, pal)); G.grid[r][c] = ' '; }
     if (ch === 'E'){ const el = mkElite(x, y, pal, L.eliteName); G.ents.push(el); G.elite = el; G.grid[r][c] = ' '; }
     if (ch === 'M'){ G.ents.push(mkMover(x, y));  G.grid[r][c] = ' '; }
     if (ch === 'F'){ G.ents.push(mkFaller(x, y)); G.grid[r][c] = ' '; }
@@ -119,6 +130,17 @@ function mkMummy(x, y, pal){ return { t:'mummy', x, y:y-6, w:38, h:56, vx:-38, h
   anim:Math.random()*9, hurt:0, dead:0, pal: pal || PAL.egypt }; }
 function mkSnake(x, y, pal){ return { t:'snake', x, y:y+30, w:46, h:18, vx:-118, hp:1,
   anim:Math.random()*9, hurt:0, dead:0, pal: pal || PAL.egypt }; }
+/* Levant roster: a hovering falcon that dives at the player from above, a
+   shield-bearing soldier who blocks every frontal hit (strike his back, or
+   stomp him), and a snow leopard that pounces in a long telegraphed leap */
+function mkFalcon(x, y, pal){ return { t:'falcon', x, y:y+6, w:44, h:28, vx:-90, hp:1,
+  ox:x, oy:y+6, range:TILE*3.5, mode:'patrol', cool:0, dvx:0, dvy:0, ty:0,
+  anim:Math.random()*9, hurt:0, dead:0, alert:0, pal: pal || PAL.snow }; }
+function mkShieldman(x, y, pal){ return { t:'shieldman', x, y:y-6, w:38, h:54, vx:-50, hp:3,
+  anim:Math.random()*9, hurt:0, dead:0, alert:0, blockT:0, pal: pal || PAL.damascus }; }
+function mkLeopard(x, y, pal){ return { t:'leopard', x, y:y+22, w:52, h:26, vx:-105, hp:2,
+  anim:Math.random()*9, hurt:0, dead:0, alert:0, pounceWind:0, pounceT:0, pounceCool:0,
+  pal: pal || PAL.snow }; }
 function mkMover(x, y){ return { t:'mover', x, y, w:TILE*2, h:16, ox:x, range:TILE*3, dir:1, spd:70 }; }
 function mkFaller(x, y){ return { t:'faller', x, y, w:TILE, h:14, oy:y, ox:x, timer:-1, vy:0, respawn:0 }; }
 function mkBoss(x, y, kind, name){ return { t:'boss', kind: kind || 'chief', name, x, y:y-58, w:86, h:116, vx:0, vy:0, hp:14, maxHp:14,

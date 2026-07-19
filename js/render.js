@@ -36,7 +36,11 @@ const BIOME_BG = {
   babylon:   { sky:['#f5d98a','#e0b463','#b98a4a','#7a5a34'], sun:'#fff0c8', cloud:'240,220,170', sil:'150,110,58', ground:'80,58,30',  shape:'ziggurat' },
   oasis:     { sky:['#bfe8d8','#8fd0b0','#5aa889','#3a7860'], sun:'#fff6c8', cloud:'220,245,230', sil:'40,90,66',   ground:'70,88,50',  shape:'oasis' },
   sandyCaves:{ sky:['#d9c9a8','#b8a480','#8a7458','#5a4a38'], sun:'#f0e0b0', cloud:'220,210,180', sil:'60,50,38',   ground:'60,50,36',  shape:'cavemouth' },
-  egypt:     { sky:['#f6d891','#eab55f','#d6893f','#9c5a33'], sun:'#fff2c4', cloud:'250,230,185', sil:'150,108,60', ground:'112,78,42', shape:'pyramids' }
+  egypt:     { sky:['#f6d891','#eab55f','#d6893f','#9c5a33'], sun:'#fff2c4', cloud:'250,230,185', sil:'150,108,60', ground:'112,78,42', shape:'pyramids' },
+  /* Levant journey: Damascus at dusk, deep cedar forest, frozen peaks */
+  damascus:  { sky:['#f4cf92','#e8a878','#b8737a','#6d4e72'], sun:'#fff0c8', cloud:'250,225,195', sil:'118,78,96',  ground:'92,64,58',  shape:'bazaar' },
+  cedar:     { sky:['#b8ddc8','#7cb494','#47836a','#2a5644'], sun:'#f2fcda', cloud:'215,240,220', sil:'32,66,48',   ground:'44,66,40',  shape:'cedars' },
+  snow:      { sky:['#eaf3fb','#c6dced','#93acc9','#5d6e8e'], sun:'#ffffff', cloud:'240,248,255', sil:'92,104,128', ground:'178,190,206', shape:'icepeaks' }
 };
 function biomeOf(){ return (LEVELS[G.lvl] && LEVELS[G.lvl].biome) || 'desert'; }
 
@@ -82,6 +86,16 @@ function drawBG(){
       ctx.fill();
     }
   }
+  /* cedar forest: soft mist banks drifting between the trees */
+  if (bk === 'cedar'){
+    ctx.fillStyle = 'rgba(230,245,235,.10)';
+    for (let i = 0; i < 3; i++){
+      const my = VH * .55 + i * 40 + Math.sin(G.time * .7 + i * 2.4) * 8;
+      ctx.beginPath();
+      ctx.ellipse(((i * 420 + G.time * 12) % (VW + 500)) - 250, my, VW * .4, 22 + i * 6, 0, 0, 7);
+      ctx.fill();
+    }
+  }
   /* ground */
   ctx.fillStyle = 'rgba(' + bio.ground + ',.85)';
   ctx.beginPath(); ctx.moveTo(0, VH);
@@ -90,6 +104,20 @@ function drawBG(){
     ctx.lineTo(x, y);
   }
   ctx.lineTo(VW, VH); ctx.fill();
+  /* snow peaks: an endless slow snowfall over the whole scene (screen-space,
+     deterministic from time so pausing freezes the flakes with the world) */
+  if (bk === 'snow'){
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    for (let i = 0; i < 54; i++){
+      const spd = 46 + (i * 37) % 42, drift = 14 + (i * 13) % 22;
+      const fx = ((i * 167.3 + Math.sin(G.time * .9 + i) * drift + cam.x * -.12) % VW + VW) % VW;
+      const fy = ((i * 97.7 + G.time * spd) % (VH + 16)) - 8;
+      const r = .9 + (i % 3) * .55;
+      ctx.globalAlpha = .35 + ((i * 29) % 50) / 100;
+      ctx.beginPath(); ctx.arc(fx, fy, r, 0, 7); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
 }
 function drawSkyline(off, base, col, s, shape){
   ctx.fillStyle = col; const W = 560 * s;
@@ -102,6 +130,9 @@ function drawSkyline(off, base, col, s, shape){
     else if (shape === 'oasis') drawOasisSilhouette();
     else if (shape === 'cavemouth') drawCaveMouthSilhouette();
     else if (shape === 'pyramids') drawPyramidSilhouette();
+    else if (shape === 'bazaar') drawBazaarSilhouette();
+    else if (shape === 'cedars') drawCedarSilhouette();
+    else if (shape === 'icepeaks') drawIcePeakSilhouette();
     else drawDomeSilhouette();
     ctx.restore();
   }
@@ -172,6 +203,64 @@ function drawCaveMouthSilhouette(){
   ctx.beginPath(); ctx.moveTo(316, -34); ctx.lineTo(326, -34); ctx.lineTo(321, -12); ctx.closePath(); ctx.fill();
 }
 
+/* damascus: a crowded old-city skyline — grand dome, twin minarets with
+   balconies, flat bazaar roofs and a pointed arched gate */
+function drawBazaarSilhouette(){
+  ctx.fillRect(20, -50, 100, 110); ctx.beginPath(); ctx.arc(70, -50, 50, 3.14, 0); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(70, -118); ctx.lineTo(74, -100); ctx.lineTo(66, -100); ctx.closePath(); ctx.fill();
+  /* twin minarets with balcony rings */
+  for (const mx of [150, 460]){
+    ctx.fillRect(mx, -150, 14, 210);
+    ctx.fillRect(mx - 5, -100, 24, 8);
+    ctx.fillRect(mx - 5, -60, 24, 8);
+    ctx.beginPath(); ctx.arc(mx + 7, -150, 11, 3.14, 0); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(mx + 7, -178); ctx.lineTo(mx + 11, -160); ctx.lineTo(mx + 3, -160); ctx.closePath(); ctx.fill();
+  }
+  /* stepped bazaar rooftops between the towers */
+  ctx.fillRect(190, -44, 84, 104); ctx.fillRect(250, -70, 60, 130);
+  ctx.fillRect(320, -38, 74, 98);
+  /* the great arched gate */
+  ctx.fillRect(396, -80, 56, 140);
+  ctx.save(); ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath(); ctx.moveTo(410, 60); ctx.lineTo(410, -40);
+  ctx.quadraticCurveTo(424, -62, 438, -40); ctx.lineTo(438, 60); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+/* cedar forest: broad, flat-tiered cedar crowns (nothing like the pointed
+   pines of the northern forest biome) */
+function drawCedarSilhouette(){
+  const cedars = [[50, 170], [160, 220], [280, 180], [400, 235], [500, 165]];
+  for (const [x, h] of cedars){
+    ctx.fillRect(x - 4, -h * .5, 8, h * .5 + 6);
+    for (let tier = 0; tier < 4; tier++){
+      const ty = -h * (.35 + tier * .2), tw = (46 - tier * 9) * (h / 180);
+      ctx.beginPath();
+      ctx.ellipse(x, ty, tw, 9 + (3 - tier) * 2, 0, 0, 7); ctx.fill();
+    }
+  }
+}
+/* frozen peaks: steep spires under heavy snow caps + a lone watchtower */
+function drawIcePeakSilhouette(){
+  ctx.beginPath(); ctx.moveTo(0, 0);
+  ctx.lineTo(50, -200); ctx.lineTo(95, -70); ctx.lineTo(150, -250); ctx.lineTo(215, -80);
+  ctx.lineTo(275, -215); ctx.lineTo(340, -50); ctx.lineTo(420, -180); ctx.lineTo(480, -90);
+  ctx.lineTo(540, 0); ctx.closePath(); ctx.fill();
+  /* heavy snow caps */
+  ctx.save(); ctx.fillStyle = 'rgba(255,255,255,.75)';
+  ctx.beginPath(); ctx.moveTo(30, -120); ctx.lineTo(50, -200); ctx.lineTo(72, -130);
+  ctx.quadraticCurveTo(50, -145, 30, -120); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(128, -170); ctx.lineTo(150, -250); ctx.lineTo(174, -175);
+  ctx.quadraticCurveTo(150, -195, 128, -170); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(255, -150); ctx.lineTo(275, -215); ctx.lineTo(297, -152);
+  ctx.quadraticCurveTo(275, -172, 255, -150); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(402, -125); ctx.lineTo(420, -180); ctx.lineTo(440, -128);
+  ctx.quadraticCurveTo(420, -145, 402, -125); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  /* frost fortress watchtower on the saddle */
+  ctx.fillRect(348, -110, 26, 62);
+  ctx.fillRect(344, -118, 8, 10); ctx.fillRect(358, -118, 8, 10); ctx.fillRect(370, -118, 6, 10);
+}
+
 /* egypt: three pyramids of varying size + a slim obelisk */
 function drawPyramidSilhouette(){
   ctx.beginPath(); ctx.moveTo(16, 0); ctx.lineTo(118, -150); ctx.lineTo(220, 0); ctx.closePath(); ctx.fill();
@@ -190,7 +279,10 @@ const BIOME_TILE = {
   babylon:   { face:'#c7a55c', shade:'#a8863e', top:'#e8cf8a' },
   oasis:     { face:'#5c8a5e', shade:'#4a7248', top:'#8fc27a' },
   sandyCaves:{ face:'#8a7458', shade:'#6e5c46', top:'#a99168' },
-  egypt:     { face:'#c9a05a', shade:'#a8813e', top:'#e6c97e' }
+  egypt:     { face:'#c9a05a', shade:'#a8813e', top:'#e6c97e' },
+  damascus:  { face:'#a8846a', shade:'#8c6a52', top:'#cfa886' },
+  cedar:     { face:'#5c7a44', shade:'#4a6436', top:'#7c9c54' },
+  snow:      { face:'#9fb0c2', shade:'#8494a8', top:'#eef4fa' }
 };
 
 /* ---- tiles (culled to camera view) ---- */

@@ -5,6 +5,8 @@
     # solid stone   = one-way platform   ^ spikes   L ladder
     C coin  H heart  P fire pack  T chest  K checkpoint  D exit door
     S scorpion  B bandit  V wolf  Y knife-throwing highwayman
+    U mummy  N desert snake  A diving falcon  Q shield soldier
+    J snow leopard
     E elite guard (must be defeated to exit)
     M moving platform  F falling platform
     * lantern  p palm  W water  G boss  R princess
@@ -12,8 +14,9 @@
    Rows are padded to the widest row on load, so trailing
    spaces are not significant. Each level also carries a short
    `story` line (shown on the intro banner) and a `biome` tag
-   ('desert'|'forest'|'mountain'|'babylon'|'oasis'|'sandyCaves',
-   default desert) that recolors the sky/skyline/ground and every
+   ('desert'|'forest'|'mountain'|'babylon'|'oasis'|'sandyCaves'|
+   'egypt'|'damascus'|'cedar'|'snow', default desert) that recolors
+   the sky/skyline/ground and every
    enemy's palette, so the journey reads as moving through distinct
    places. A level with an `E` elite guard won't let the player
    through its exit door until that guard (named by `eliteName`) is
@@ -391,6 +394,166 @@ const LEVELS = [
 "###############  ##########  ######   ##################################################################################",
 "###############  ##########  ######   ##################################################################################",
 "###############  ##########  ######   ##################################################################################"
+]},
+/* ===== LEVELS 22..30 — THE LEVANT (بلاد الشام): a full new epic
+   chapter. Damascus bazaars → cedar forests → frozen peaks, introducing
+   the falcon (A), the shield soldier (Q) and the snow leopard (J), and
+   ending at the Frost Emir (warlord-kind boss). Long levels by design.
+   Append-only: never reorder. ===== */
+{ name:{ar:'بوابة الشرق',en:'The Eastern Gate'},
+  story:{ar:'بعد كسر لعنة مصر، يصل الخبر: نائبُ زعيم العصابة «أمير الصقيع» فرّ بقافلة كنوز المملكة شمالاً إلى الشام!',
+         en:"After Egypt's curse is broken, word arrives: the gang's second-in-command, the Frost Emir, has fled north to the Levant with the kingdom's treasure caravan!"},
+  biome:'damascus', rows:[
+"",
+"",
+"                              C C C                                                                                         C C C",
+"                             =====                     T                                                                   =====",
+"                       C C                            ===  C C                              H                                    C C",
+"                      ======                  A           ======                          =======       A                       ======",
+"                *                   P                             *                                             *                                   *",
+"  K     B   C       Q     C      B         K    Y     C C   Q         B     C         Q B           K    C  S           Y     C    Q             B    C   D",
+"###############   #########^^#########   ########################   ##############^^############   ###############   ##########^^##########   ################",
+"###############   ####################   ########################   ############################   ###############   ######################   ################",
+"###############   ####################   ########################   ############################   ###############   ######################   ################",
+"###############   ####################   ########################   ############################   ###############   ######################   ################"
+]},
+{ name:{ar:'خان القوافل',en:'Khan of the Caravans'},
+  story:{ar:'في خان القوافل يتاجر رجالُ أمير الصقيع بالكنوز المسروقة — جنودٌ بدروعٍ تصدّ الضربات، وكنوزٌ مدفونةٌ تحت البلاط.',
+         en:"At the caravans' khan the Frost Emir's men trade the stolen treasure — shield-bearing soldiers who turn every blow, and riches buried beneath the tiles."},
+  biome:'damascus', rows:[
+"",
+"",
+"                                 C C C                                                          C C C",
+"                                ======                                                         =====",
+"                                    L                               C C                                          H",
+"                                    L                             ======              A                         ======",
+"                    *               L                       *                                       *                          P            *",
+"  K                   B   C     Y   LC       B      K  C  Q       B       C  Q   B            K   C   S       Y    C         Q                K   B C     D",
+"###############   ######################WWW####################   ####X###################^^##############   ###########X##########WWW##########################",
+"###############   #############################################   ####H###################################   ###########T#######################################",
+"###############   #############################################   ########################################   ###################################################",
+"###############   #############################################   ########################################   ###################################################"
+]},
+{ name:{ar:'أسطح السوق العتيق',en:'Rooftops of the Old Bazaar'},
+  story:{ar:'مطاردةٌ فوق أسطح دمشق العتيقة — صقورٌ مدرّبةٌ تنقضّ من السماء، وقائدُ حرس السوق يقطع طريق البوابة الشمالية.',
+         en:'A chase across the rooftops of old Damascus — trained falcons dive from the sky, and the Captain of the Bazaar Watch bars the northern gate.'},
+  biome:'damascus', eliteName:{ar:'قائد حرس السوق',en:'Captain of the Bazaar Watch'}, rows:[
+"",
+"",
+"                                                                        T                                   C C C",
+"                                                                      =====                                =====",
+"                     C C                                     C C                                     C C                          H",
+"                    ======              A                   ======                        A         ======            A         ======",
+"               *                            ====    P                      *        ====                                               *",
+"  K   B     C     Q           B     C     Y       K     S         B     C     Q           K     C        B      Y                 C     E       D",
+"#########################   ################################   #####################################^^##################   ###########################",
+"#########################   ################################   #########################################################   ###########################",
+"#########################   ################################   #########################################################   ###########################",
+"#########################   ################################   #########################################################   ###########################"
+]},
+{ name:{ar:'دروب الأرز',en:'The Cedar Trails'},
+  story:{ar:'تحت ظلال أرز لبنان العظيم يتبع عبدالله أثر القافلة — ذئابٌ جائعةٌ وصقورٌ تحرس الدروب.',
+         en:'Beneath the great cedars of Lebanon, Abdullah follows the caravan trail — hungry wolves and falcons guard the paths.'},
+  biome:'cedar', rows:[
+"",
+"",
+"                                C C C                                                   T",
+"                               =====                                                  =====",
+"                             C C                                         C C                               CHC                               C C",
+"                            ======                A                     ======                      A     ======                A           ======",
+"                              *                                 P                         *                                                           *",
+"  K     V     C           V     C     B     K           V     C     Y     C           B     C     V     K     C   V           B     C     V           K     C   B    D",
+"####################   ###########################^^############################   #####################################   #######################^^######################",
+"####################   #########################################################   #####################################   ###############################################",
+"####################   #########################################################   #####################################   ###############################################",
+"####################   #########################################################   #####################################   ###############################################"
+]},
+{ name:{ar:'الوادي المقدس',en:'The Sacred Valley'},
+  story:{ar:'وادٍ عميقٌ تعبره جداول الجبل — جنود الدروع يحرسون المخاضات، فاضرب من الخلف أو اقفز فوق الرؤوس.',
+         en:'A deep valley crossed by mountain streams — shield soldiers hold the fords; strike from behind, or leap over their heads.'},
+  biome:'cedar', rows:[
+"",
+"",
+"                                                          C C C                                                 T",
+"                                                         ======                                               =====",
+"                         C C                                L                 H                          C C",
+"                        ======                 A            L               ======                      ======              A",
+"            *                                               L         *               P                               *                         *",
+"  K     Q     C         B     C     Q     K   S         B   L C     Q     Y     C               K     C     Q     B     C           V     Q   K           B     D",
+"##################WWW#############################   #####################################WWW###################################^^##################   ##############",
+"##################################################   ###############################################################################################   ##############",
+"##################################################   ###############################################################################################   ##############",
+"##################################################   ###############################################################################################   ##############"
+]},
+{ name:{ar:'قلب الغابة القديمة',en:'Heart of the Ancient Forest'},
+  story:{ar:'في قلب الغابة تظهر نمورُ الثلوج لأول مرة — وثبتُها طويلةٌ فلا تقف مكانك! وحارسُ الأرز العتيق يسدّ الممر.',
+         en:'In the forest heart the snow leopards first appear — their pounce is long, so never stand still! And the Ancient Cedar Warden bars the pass.'},
+  biome:'cedar', eliteName:{ar:'حارس الأرز العتيق',en:'The Ancient Cedar Warden'}, rows:[
+"",
+"",
+"                                            C C C                                                                   T",
+"                                           =====                                                                  =====",
+"                                         C C                                           C C                                      H                 C C",
+"                                        ======      A                                 ======    A                             ======             ======",
+"                        *                                                 *                       P                       *                                       *",
+"  K       J     C         V     C     J       K     B    C        Y     C     J     K     C   V           Q     C     J     K     C   B               E       C         D",
+"####################   #####################################   #####################################   #####################################^^#################################",
+"####################   #####################################   #####################################   ########################################################################",
+"####################   #####################################   #####################################   ########################################################################",
+"####################   #####################################   #####################################   ########################################################################"
+]},
+{ name:{ar:'عاصفة القمم',en:'Storm of the Peaks'},
+  story:{ar:'يشتدّ الثلج والريح على القمم — النمورُ تكمن خلف العاصفة وشوكُ الجليد يغطي الدرب.',
+         en:'Snow and wind rage on the peaks — leopards lurk behind the storm and ice spikes sheet the trail.'},
+  biome:'snow', rows:[
+"",
+"",
+"                                                            C C C                                                         T",
+"                                                           ======                                                       =====",
+"                         C C                                                 H                           C C                                      C C",
+"                        ======      A                                       ======        A             ======                A                  ======",
+"                    *                           P                   *                                           *                         P               *",
+"  K     J    C        J     C    B            K     C     J     Y          C    Q     J     K    C          J     C     B               K     C  J          C   B    D",
+"###############   ######################^^^###########################   ###########################^^^###########################   #################^^##################",
+"###############   ####################################################   #########################################################   #####################################",
+"###############   ####################################################   #########################################################   #####################################",
+"###############   ####################################################   #########################################################   #####################################"
+]},
+{ name:{ar:'جسر الجليد المعلق',en:'The Hanging Ice Bridge'},
+  story:{ar:'هاويةٌ لا قرار لها لا يعبرها إلا جسورُ جليدٍ متحركةٌ وألواحٌ تتهاوى تحت القدم — اقفز ولا تتردد!',
+         en:'A bottomless chasm crossed only by drifting ice bridges and slabs that crumble underfoot — jump, and never hesitate!'},
+  biome:'snow', rows:[
+"",
+"",
+"                                                                C C C                           T",
+"                                                               ======                          =====",
+"                               C C                                H                                                   C C",
+"                              ======          A                  ======             A                           A    ======",
+"            *                               P             *                                       *        P                                        *",
+"  K     C     J      M        B     C     K       F F F     C J     Q     K      M        C   J     B    K          Y     C   J        F F F F    C   B    D",
+"####################        ######################      ########################        ######################   ######################        #################",
+"####################        ######################      ########################        ######################   ######################        #################",
+"####################        ######################      ########################        ######################   ######################        #################",
+"####################        ######################      ########################        ######################   ######################        #################"
+]},
+{ name:{ar:'عرش أمير الصقيع',en:'Throne of the Frost Emir'},
+  story:{ar:'قمة الجبل الأعلى — أميرُ الصقيع نفسُه يقف بين عبدالله وكنوز المملكة. استردّ ما سُرق!',
+         en:'The highest summit — the Frost Emir himself stands between Abdullah and the kingdom\'s treasure. Take back what was stolen!'},
+  biome:'snow', bossKind:'warlord',
+  bossName:{ar:'أمير الصقيع',en:'The Frost Emir'},
+  bossTagline:{ar:'ستدفنك عاصفتي تحت الثلج يا أمير!',en:'My storm will bury you beneath the snow, prince!'}, rows:[
+"",
+"",
+"        *               C C C                *",
+"   C C                                            C C",
+"  =====               =======               =====",
+"",
+"",
+"   K                          G                  D",
+"",
+"################################################################",
+"################################################################",
+"################################################################"
 ]}
 ];
 
@@ -432,12 +595,21 @@ const WORLD = [
         levels:[16,17,18,19,20,21] }
     ]
   },
-  /* ---- future maps: data scaffold only, no playable levels yet ---- */
-  { id:'levant', future:true, name:{ar:'بلاد الشام — جبال وثلوج',en:'The Levant — Mountains & Snow'},
+  /* ---- Levant: the third playable map — the hunt for the Frost Emir ---- */
+  { id:'levant', unlockKeys:12, name:{ar:'بلاد الشام — جبال وثلوج',en:'The Levant — Mountains & Snow'},
     chapters:[
-      { name:{ar:'أسواق دمشق العتيقة',en:'Old Damascus Bazaars'}, levels:[] },
-      { name:{ar:'غابات الأرز اللبنانية',en:'Lebanese Cedar Forests'}, levels:[] },
-      { name:{ar:'قمم الثلج الشمالية',en:'Northern Snow Peaks'}, levels:[] }
+      { name:{ar:'أسواق دمشق العتيقة',en:'Old Damascus Bazaars'}, unlockKeys:12,
+        desc:{ar:'فرّ أمير الصقيع بكنوز المملكة إلى دمشق — طارده عبر البوابات والخانات وفوق أسطح السوق العتيق.',
+               en:"The Frost Emir fled to Damascus with the kingdom's treasure — hunt him through gates, khans and over the old bazaar rooftops."},
+        levels:[22,23,24] },
+      { name:{ar:'غابات الأرز اللبنانية',en:'Lebanese Cedar Forests'}, unlockKeys:15,
+        desc:{ar:'دروبُ الأرز العظيمة تصعد نحو الجبال — ذئابٌ وصقورٌ ونمورُ ثلوجٍ تحت الظلال القديمة.',
+               en:'The great cedar trails climb toward the mountains — wolves, falcons and snow leopards beneath the ancient shade.'},
+        levels:[25,26,27] },
+      { name:{ar:'قمم الثلج الشمالية',en:'Northern Snow Peaks'}, unlockKeys:18,
+        desc:{ar:'فوق العواصف والجسور المعلقة ينتظر أميرُ الصقيع على عرشه المتجمد — استردّ كنوز المملكة!',
+               en:'Above the storms and hanging bridges, the Frost Emir waits on his frozen throne — take back the kingdom\'s treasure!'},
+        levels:[28,29,30] }
     ]
   },
   { id:'gulf', future:true, name:{ar:'سواحل الخليج — البحر والموانئ',en:'The Gulf Coast — Sea & Ports'},

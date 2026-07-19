@@ -50,7 +50,7 @@ function meleeStrike(){
   };
   const cx = P.x + P.w / 2;
   for (const e of G.ents)
-    if (GROUND_ENEMY_TYPES.has(e.t) && !e.dead && aabb(box, e)) hitEnemy(e, 1, cx);
+    if (enemyHittable(e.t) && !e.dead && aabb(box, e)) hitEnemy(e, 1, cx);
   const b = G.boss;
   if (b && !b.dead && aabb(box, b)) hitBoss(1);
   ring(cx + P.face * 26, P.y + P.h / 2, 'rgba(255,250,235,.85)', 30);

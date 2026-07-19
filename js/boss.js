@@ -130,6 +130,15 @@ function updateWarlordBoss(dt, b){
    so a hit looks and scores the same however it lands. */
 function hitEnemy(e, dmg, srcx){
   if (e.dead) return;
+  /* the shieldman blocks anything that arrives from the side he faces —
+     sword and fireball alike clang off; hit his back or stomp him */
+  if (e.t === 'shieldman' && Math.sign(srcx - (e.x + e.w / 2)) === (Math.sign(e.vx) || -1)){
+    e.blockT = .3; e.alert = .5; SFX.hit();
+    const d = Math.sign(e.vx) || -1;
+    puff(e.x + e.w / 2 + d * 20, e.y + e.h * .45, 6, '#cfd3d8', 130, .3);
+    e.x += (Math.sign(e.x + e.w / 2 - srcx) || 1) * 5;   // slight shove, no damage
+    return;
+  }
   e.hp -= dmg; e.hurt = .2;
   e.x += (Math.sign(e.x - srcx) || 1) * 8;          // knockback away from the attacker
   if (e.hp <= 0){
@@ -172,7 +181,7 @@ function updateFireballs(dt){
          (see drawFireballs) extends the vertical reach below the core, so a
          hand-height shot still connects with short, ground-hugging foes
          (scorpions, wolves) instead of sailing over them */
-      if (GROUND_ENEMY_TYPES.has(e.t) && !e.dead &&
+      if (enemyHittable(e.t) && !e.dead &&
           Math.abs(f.x - (e.x + e.w / 2)) < e.w / 2 + f.r &&
           (f.y - f.r) < (e.y + e.h) && (f.y + f.r + 30) > e.y){
         hitEnemy(e, 1, f.x); dead = true;

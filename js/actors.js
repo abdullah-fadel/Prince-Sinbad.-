@@ -342,6 +342,128 @@ function drawSnake(e){
   ctx.lineCap = 'butt'; ctx.restore();
 }
 
+/* ---- shield soldier (Levant — sprite body + drawn shield): same army
+   sprite as the bandit, but carrying a tall steel shield on his facing
+   side. The shield flashes bright when a blocked hit clangs off it. ---- */
+function drawShieldman(e){
+  drawSoldierBody(e, 66);
+  if (!e.dead){
+    const d = Math.sign(e.vx) || 1;
+    ctx.save();
+    ctx.translate(e.x + e.w / 2 + d * 17, e.y + e.h - 27);
+    const flash = e.blockT > 0;
+    ctx.fillStyle = flash ? '#eef2f6' : '#8a929c';
+    ctx.beginPath(); ctx.ellipse(0, 0, 8, 17, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#4a525c'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.ellipse(0, 0, 8, 17, 0, 0, 7); ctx.stroke();
+    ctx.fillStyle = '#d4af37'; ctx.beginPath(); ctx.arc(0, 0, 3.2, 0, 7); ctx.fill();
+    if (flash){
+      ctx.strokeStyle = 'rgba(255,255,255,' + Math.min(1, e.blockT * 4) + ')';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(d * 6, -14); ctx.lineTo(d * 14, -20);
+      ctx.moveTo(d * 8, 0); ctx.lineTo(d * 17, 0);
+      ctx.moveTo(d * 6, 14); ctx.lineTo(d * 14, 20); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  if (e.alert > 0 && !e.dead){
+    ctx.fillStyle = 'rgba(255,220,80,' + Math.min(1, e.alert * 2) + ')';
+    ctx.font = 'bold 22px Tahoma'; ctx.textAlign = 'center';
+    ctx.fillText('!', e.x + e.w / 2, e.y - 10 - Math.sin(e.alert * 12) * 3);
+  }
+}
+
+/* ---- falcon (Levant — procedural): a hovering raptor. Wings beat in a
+   slow glide on patrol, fold back into a dart while diving. ---- */
+function drawFalcon(e){
+  ctx.save(); ctx.translate(e.x + e.w / 2, e.y + e.h / 2);
+  const d = e.mode === 'dive' ? (Math.sign(e.dvx) || 1) : (Math.sign(e.vx) || 1);
+  ctx.scale(d, 1);
+  if (e.dead) ctx.scale(1, -1);
+  const hurt = e.hurt > 0;
+  const body = hurt ? '#ffb0a0' : '#6a4a34', wing = hurt ? '#ffb0a0' : '#4e3626';
+  const dive = e.mode === 'dive' && !e.dead;
+  const flap = dive ? -.9 : Math.sin(e.anim * 9) * .8;
+  /* wings */
+  ctx.fillStyle = wing;
+  for (const s of [-1, 1]){
+    ctx.save(); ctx.rotate(flap * s * (dive ? 1 : .8));
+    ctx.beginPath(); ctx.moveTo(-2, 0);
+    ctx.quadraticCurveTo(-10, -14 * s * 0 - 16, -30, dive ? 10 : -8);
+    ctx.quadraticCurveTo(-14, -2, -2, 5); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  /* body + tail */
+  ctx.fillStyle = body;
+  ctx.beginPath(); ctx.ellipse(2, 0, 15, 8, dive ? .35 : 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-12, -2); ctx.lineTo(-24, -1 + Math.sin(e.anim * 6) * 2); ctx.lineTo(-12, 4); ctx.closePath(); ctx.fill();
+  /* head, beak, eye */
+  ctx.fillStyle = body; ctx.beginPath(); ctx.arc(15, -4, 6, 0, 7); ctx.fill();
+  ctx.fillStyle = '#e8b23c'; ctx.beginPath(); ctx.moveTo(20, -5); ctx.lineTo(27, -2); ctx.lineTo(20, 0); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#ffd75e'; ctx.beginPath(); ctx.arc(16, -5, 1.8, 0, 7); ctx.fill();
+  ctx.restore();
+  if (e.alert > 0 && !e.dead){
+    ctx.fillStyle = 'rgba(255,220,80,' + Math.min(1, e.alert * 2) + ')';
+    ctx.font = 'bold 20px Tahoma'; ctx.textAlign = 'center';
+    ctx.fillText('!', e.x + e.w / 2, e.y - 8);
+  }
+}
+
+/* ---- snow leopard (Levant — procedural): a pale spotted cat. Crouches
+   low through the pounce telegraph, stretches out mid-leap. ---- */
+function drawLeopard(e){
+  const pal = e.pal || PAL.snow;
+  if (!e.dead) drawShadow(e.x + e.w / 2, e.y + e.h, e.w * .85);
+  ctx.save(); ctx.translate(e.x + e.w / 2, e.y + e.h); ctx.scale(Math.sign(e.vx) || 1, 1);
+  if (e.dead) ctx.scale(1, -1);
+  const hurt = e.hurt > 0;
+  const bodyC = hurt ? '#ffb0a0' : '#dce4ec', darkC = hurt ? '#ffb0a0' : '#9aa6b4';
+  const crouch = e.pounceWind > 0, leap = e.pounceT > 0 && !e.onG;
+  const run = Math.sin(e.anim * 15);
+  if (crouch) ctx.scale(1.08, .75);
+  if (leap) ctx.scale(1.2, .85);
+  /* legs (trot / tucked in flight) */
+  ctx.strokeStyle = darkC; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath();
+  if (leap){
+    ctx.moveTo(-14, -8); ctx.lineTo(-20, -3);
+    ctx.moveTo(14, -8); ctx.lineTo(21, -3);
+  } else {
+    ctx.moveTo(-13, -7); ctx.lineTo(-13 + run * 4, 0);
+    ctx.moveTo(12, -7); ctx.lineTo(12 - run * 4, 0);
+    ctx.moveTo(-6, -8); ctx.lineTo(-6 - run * 3, 0);
+    ctx.moveTo(5, -8); ctx.lineTo(5 + run * 3, 0);
+  }
+  ctx.stroke();
+  /* body */
+  ctx.fillStyle = bodyC;
+  ctx.beginPath(); ctx.ellipse(-1, -15, 20, 10, leap ? -.12 : 0, 0, 7); ctx.fill();
+  /* rosette spots */
+  ctx.fillStyle = 'rgba(90,100,115,.55)';
+  for (const [sx, sy] of [[-12, -17], [-4, -13], [4, -18], [11, -13], [-8, -20]]){
+    ctx.beginPath(); ctx.arc(sx, sy, 2, 0, 7); ctx.fill();
+  }
+  /* thick tail */
+  ctx.strokeStyle = bodyC; ctx.lineWidth = 5.5;
+  ctx.beginPath(); ctx.moveTo(-19, -16);
+  ctx.quadraticCurveTo(-30, -24 + run * 2, -33, -12); ctx.stroke();
+  /* head + ears */
+  ctx.fillStyle = bodyC;
+  ctx.beginPath(); ctx.arc(18, -19, 8, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(13, -25); ctx.lineTo(15, -31); ctx.lineTo(18, -24); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(20, -25); ctx.lineTo(24, -30); ctx.lineTo(24, -23); ctx.closePath(); ctx.fill();
+  /* muzzle + eye */
+  ctx.fillStyle = darkC; ctx.beginPath(); ctx.ellipse(24, -16, 3.6, 2.6, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = crouch || leap ? '#8fd8f0' : '#3a4650';
+  ctx.beginPath(); ctx.arc(20, -21, 1.8, 0, 7); ctx.fill();
+  ctx.lineCap = 'butt'; ctx.restore();
+  if (e.alert > 0 && !e.dead){
+    ctx.fillStyle = 'rgba(255,220,80,' + Math.min(1, e.alert * 2) + ')';
+    ctx.font = 'bold 22px Tahoma'; ctx.textAlign = 'center';
+    ctx.fillText('!', e.x + e.w / 2, e.y - 12 - Math.sin(e.alert * 12) * 3);
+  }
+}
+
 /* ---- elite evil soldier: the tougher foe blocking each new scenario's
    exit — same sprite as the rank-and-file soldier, just bigger, plus a
    nameplate and hp bar ---- */
