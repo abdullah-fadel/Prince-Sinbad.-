@@ -61,6 +61,9 @@ function loop(ts){
     else if (e.t === 'thrower') drawThrower(e);
     else if (e.t === 'mummy') drawMummy(e);
     else if (e.t === 'snake') drawSnake(e);
+    else if (e.t === 'falcon') drawFalcon(e);
+    else if (e.t === 'shieldman') drawShieldman(e);
+    else if (e.t === 'leopard') drawLeopard(e);
   }
   drawBoss(); drawPrincess(dt); drawFireballs(); drawKnives(); drawParts(); drawHero();
   ctx.restore();

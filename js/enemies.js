@@ -76,11 +76,45 @@ function updateEnemies(dt){
           e.vx = Math.abs(e.vx) * Math.sign(dx);
       }
 
+      /* shieldman: patrols like a bandit but never charges — his threat is
+         the raised shield (frontal hits bounce off, see hitEnemy). He turns
+         to face the player so flanking takes actual footwork. */
+      if (e.t === 'shieldman'){
+        e.blockT = Math.max(0, (e.blockT || 0) - dt);
+        const dx = P.x - e.x, dy = Math.abs(P.y - e.y);
+        if (!P.dead && dy < 60 && Math.abs(dx) > 30 && Math.abs(dx) < 200 &&
+            Math.sign(dx) !== (Math.sign(e.vx) || -1)){
+          e.vx = -e.vx; e.alert = .5;
+        }
+      }
+
+      /* snow leopard: crouch telegraph, then a long pouncing leap at the
+         player — airborne it clears gaps, so keep moving */
+      if (e.t === 'leopard'){
+        e.pounceCool = Math.max(0, (e.pounceCool || 0) - dt);
+        if (e.pounceT > 0){ e.pounceT -= dt; if (e.onG || e.pounceT <= 0){ e.pounceT = 0; e.pounceCool = 1.6; } }
+        if (e.pounceWind > 0){
+          e.pounceWind -= dt;
+          if (e.pounceWind <= 0 && e.onG){
+            e.vy = -430; e.pounceT = .9; SFX.stomp();
+            puff(e.x + e.w / 2, e.y + e.h, 8, '#dce4ec', 120, .4);
+          }
+        } else if (e.onG && e.pounceCool <= 0 && !P.dead){
+          const dx = P.x - e.x, dy = P.y - e.y;
+          if (Math.abs(dx) < 230 && dy > -70 && dy < 50){
+            e.vx = Math.abs(e.vx) * (Math.sign(dx) || 1);
+            e.pounceWind = .3; e.alert = .7; SFX.hit();
+          }
+        }
+      }
+
       const winding = ((e.t === 'bandit' || e.t === 'elite') && e.windup > 0) ||
-                      (e.t === 'thrower' && e.throwWindup > 0);
+                      (e.t === 'thrower' && e.throwWindup > 0) ||
+                      (e.t === 'leopard' && e.pounceWind > 0);
       const paused = (e.t === 'scorp' && e.pause > 0) || winding;
       const lunging = (e.t === 'bandit' || e.t === 'elite') && e.lunge > 0;
-      const spd = paused ? 0 : lunging ? (e.t === 'elite' ? 210 : 170) : Math.abs(e.vx);
+      const spd = paused ? 0 : lunging ? (e.t === 'elite' ? 210 : 170) :
+                  (e.t === 'leopard' && e.pounceT > 0) ? 265 : Math.abs(e.vx);
       const dir = Math.sign(e.vx) || -1;
       e.x += dir * spd * dt; e.vx = dir * Math.abs(e.vx);
       collideX(e);
@@ -92,10 +126,52 @@ function updateEnemies(dt){
         if (P.vy > 160 && P.y + P.h < e.y + e.h * .6){ // stomp
           P.vy = -520; P.jumps = 1; G.hitstop = Math.max(G.hitstop, .05); SFX.stomp();
           puff(e.x + e.w / 2, e.y, 10, '#c9a15a', 130, .5);
-          /* the elite guard and the tanky mummy shrug off a stomp into a
-             normal hit instead of an instant kill */
-          if (e.t === 'elite' || e.t === 'mummy'){ e.hp--; e.hurt = .2; } else e.hp = 0;
+          /* the elite guard, tanky mummy and shield soldier shrug off a
+             stomp into a normal hit instead of an instant kill (the shield
+             can't cover a man's head) */
+          if (e.t === 'elite' || e.t === 'mummy' || e.t === 'shieldman'){ e.hp--; e.hurt = .2; } else e.hp = 0;
           if (e.hp <= 0 && !e.dead){
+            e.dead = .01; const pts = enemyPoints(e.t); G.score += pts;
+            ring(e.x + e.w / 2, e.y + e.h / 2, '#ffe9b0', 34);
+            popText(e.x + e.w / 2, e.y - 8, '+' + pts);
+          }
+        } else hurtPlayer(1, Math.sign(P.x - e.x));
+      }
+    }
+
+    /* falcon: gravity-free hunter. Hovers a sine-bob patrol lane, and when
+       the player passes underneath it folds its wings and dives at where he
+       stood, then climbs back to its lane before it can strike again. */
+    if (e.t === 'falcon'){
+      e.anim += dt;
+      e.hurt = Math.max(0, e.hurt - dt);
+      e.alert = Math.max(0, (e.alert || 0) - dt);
+      e.cool = Math.max(0, (e.cool || 0) - dt);
+      if (e.mode === 'dive'){
+        e.x += e.dvx * dt; e.y += e.dvy * dt;
+        const gc = Math.floor((e.x + e.w / 2) / TILE), gr = Math.floor((e.y + e.h) / TILE);
+        if (e.y >= e.ty || solid(tileAt(gc, gr))){ e.mode = 'return'; e.vx = Math.abs(e.vx) * (e.dvx < 0 ? -1 : 1); }
+      } else if (e.mode === 'return'){
+        e.y -= 150 * dt;
+        e.x += Math.sign(e.vx || 1) * 55 * dt;
+        if (e.y <= e.oy){ e.y = e.oy; e.mode = 'patrol'; e.cool = 1.8; }
+      } else {
+        e.x += e.vx * dt;
+        if (e.x > e.ox + e.range || e.x < e.ox - e.range) e.vx = -e.vx;
+        e.y = e.oy + Math.sin(e.anim * 2.2) * 12;
+        const dx = (P.x + P.w / 2) - (e.x + e.w / 2), dy = P.y - (e.y + e.h);
+        if (!P.dead && e.cool <= 0 && dy > 30 && dy < 320 && Math.abs(dx) < 150){
+          const len = Math.hypot(dx, dy) || 1;
+          e.dvx = 330 * dx / len; e.dvy = 330 * dy / len;
+          e.ty = P.y + P.h - e.h; e.mode = 'dive'; e.alert = .6; SFX.hit();
+        }
+      }
+      if (!P.dead && aabb(e, P)){
+        if (P.vy > 160 && P.y + P.h < e.y + e.h * .7){
+          P.vy = -520; P.jumps = 1; G.hitstop = Math.max(G.hitstop, .05); SFX.stomp();
+          puff(e.x + e.w / 2, e.y, 10, '#9a8064', 130, .5);
+          e.hp = 0;
+          if (!e.dead){
             e.dead = .01; const pts = enemyPoints(e.t); G.score += pts;
             ring(e.x + e.w / 2, e.y + e.h / 2, '#ffe9b0', 34);
             popText(e.x + e.w / 2, e.y - 8, '+' + pts);

@@ -30,6 +30,20 @@ python3 -m http.server 8080
   `S`/`↓` للنزول أو الهبوط عبر المنصات، `Esc` للإيقاف المؤقت.
 - **الموبايل:** أزرار لمس على الشاشة — الوضع الأفقي فقط.
 
+## الخرائط / Maps
+
+ثلاث خرائط قابلة للعب حتى الآن — العراق (١٦ مستوى)، مصر (٦ مستويات)، وبلاد الشام
+(٩ مستويات طويلة: أسواق دمشق العتيقة، غابات الأرز، قمم الثلج الشمالية) تُفتح
+بجمع المفاتيح. كل خريطة ببيئاتها وأعدائها الخاصين — ومن أعداء الشام: الصقر
+المنقضّ من السماء، وجندي الترس الذي يصدّ الضربات الأمامية، ونمر الثلوج الوثّاب،
+وزعيم نهاية الخريطة «أمير الصقيع».
+
+Three playable maps so far — Iraq (16 levels), Egypt (6) and the Levant
+(9 long levels: Old Damascus Bazaars, the Cedar Forests, the Northern Snow
+Peaks), unlocked by collecting keys. Each map has its own biomes and foes;
+the Levant adds the diving falcon, the shield soldier who blocks frontal
+hits, the pouncing snow leopard, and the Frost Emir boss.
+
 ## الأنظمة / Systems
 
 Coyote time, jump buffering, variable jump height, double jump, shaped gravity
