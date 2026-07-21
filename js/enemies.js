@@ -53,7 +53,10 @@ function updateEnemies(dt){
         const dx = P.x - e.x, dy = Math.abs(P.y - e.y);
         const facing = Math.sign(e.vx) || -1;
         const seeking = !P.dead && dy < 100 && Math.abs(dx) < SOLDIER_CHASE_RANGE;
-        if (e.lunge > 0) e.lunge -= dt;
+        if (e.lunge > 0){
+          e.lunge -= dt;
+          if (Math.sign(dx) !== facing) e.lunge = 0; // already sailed past the player — stop the charge, don't overshoot further
+        }
         else if (e.windup > 0){
           e.windup -= dt;
           if (e.windup <= 0){ e.lunge = 1.1; }
@@ -175,7 +178,7 @@ function updateEnemies(dt){
             ring(e.x + e.w / 2, e.y + e.h / 2, '#ffe9b0', 34);
             popText(e.x + e.w / 2, e.y - 8, '+' + pts);
           }
-        } else hurtPlayer(1, Math.sign(P.x - e.x));
+        } else { hurtPlayer(1, Math.sign(P.x - e.x)); e.lunge = 0; } // stop the charge on contact instead of sailing past
       }
     }
 
