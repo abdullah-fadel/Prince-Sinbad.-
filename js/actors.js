@@ -1,13 +1,14 @@
 "use strict";
 /* =========================================================
-   actors.js — character rendering. The hero, the bandit/thrower/
-   elite "evil soldier" trio, the chief boss and the princess are
-   real image sprites rendered from the uploaded 3D character
-   models (img/*.png). The scorpion, wolf and mid-roster warlord
-   boss have no matching model and stay procedural vector art.
-   Sprites carry no skeleton, so motion is faked by transforming
-   the whole rigid image (lean, bob, squash/stretch, rotation)
-   instead of animating limbs.
+   actors.js — character rendering. The hero, the evil-soldier
+   quartet (bandit/thrower/elite/shieldman), the chief boss and the
+   princess are real image sprites rendered from the uploaded 3D
+   character models (img/*.png). The scorpion, wolf and mid-roster
+   warlord boss have no matching model and stay procedural vector
+   art. Where a clip covers the pose (hero run/jump, leader's whole
+   moveset, soldier run/jump/idle) real per-frame skeletal poses are
+   used; states with no matching clip still fake motion by
+   transforming a still frame (lean, bob, squash/stretch, rotation).
    ========================================================= */
 
 function loadSprite(src){ const img = new Image(); img.src = src; return img; }
@@ -17,9 +18,9 @@ const HERO_RUN_FRAMES = 10, HERO_JUMP_FRAMES = 8, HERO_ROLL_FRAMES = 8, HERO_FIR
 const HERO_FIRE_ENABLED = false;
 const LEADER_IDLE_FRAMES = 6, LEADER_WALK_FRAMES = 8, LEADER_WINDUP_FRAMES = 6,
       LEADER_SLAM_FRAMES = 5, LEADER_THROW_FRAMES = 6, LEADER_DEATH_FRAMES = 8;
+const SOLDIER_RUN_FRAMES = 10, SOLDIER_JUMP_FRAMES = 8, SOLDIER_IDLE_FRAMES = 8;
 const SPR = {
   hero: loadSprite('img/hero.png'),
-  soldier: loadSprite('img/soldier.png'),
   princess: loadSprite('img/princess.png'),
   /* real running/jumping/rolling animation frames, rendered from the
      rigged hero model (Jogging / Jump Up clips, and a hand-keyed tuck
@@ -44,7 +45,15 @@ const SPR = {
   leaderWindup: Array.from({length: LEADER_WINDUP_FRAMES}, (_, i) => loadSprite(`img/leader_windup/windup_${i}.png`)),
   leaderSlam: Array.from({length: LEADER_SLAM_FRAMES}, (_, i) => loadSprite(`img/leader_slam/slam_${i}.png`)),
   leaderThrow: Array.from({length: LEADER_THROW_FRAMES}, (_, i) => loadSprite(`img/leader_throw/throw_${i}.png`)),
-  leaderDeath: Array.from({length: LEADER_DEATH_FRAMES}, (_, i) => loadSprite(`img/leader_death/death_${i}.png`))
+  leaderDeath: Array.from({length: LEADER_DEATH_FRAMES}, (_, i) => loadSprite(`img/leader_death/death_${i}.png`)),
+  /* evil soldier army (bandit/thrower/elite/shieldman): real per-frame
+     poses rendered from the uploaded rigged "humanoid" model + its
+     Jogging/Jump Up/Waiting clips — same real-frame-sequence convention
+     as the hero and leader, replacing the old single static soldier.png
+     and its faked lean/bob transform */
+  soldierRun: Array.from({length: SOLDIER_RUN_FRAMES}, (_, i) => loadSprite(`img/soldier_run/run_${i}.png`)),
+  soldierJump: Array.from({length: SOLDIER_JUMP_FRAMES}, (_, i) => loadSprite(`img/soldier_jump/jump_${i}.png`)),
+  soldierIdle: Array.from({length: SOLDIER_IDLE_FRAMES}, (_, i) => loadSprite(`img/soldier_idle/idle_${i}.png`))
 };
 /* true once the optional cast frames have actually decoded (a missing file
    leaves naturalWidth 0, so we transparently fall back to the drawn arm) */
@@ -218,31 +227,45 @@ function drawScorp(e){
   ctx.lineCap = 'butt'; ctx.restore();
 }
 
-/* ---- evil soldier: shared sprite-based body for the bandit/thrower/
-   elite trio so the whole enemy roster reads as one army — only the
-   display height, shadow width and post-body overlays (nameplate,
-   alert) differ per type. No rig, so windup/lunge/marching are faked
-   by leaning and bobbing the whole rigid sprite. ---- */
+/* ---- evil soldier: shared body for the bandit/thrower/elite/shieldman
+   quartet so the whole enemy roster reads as one army — only the display
+   height, shadow width and post-body overlays (nameplate, alert, shield)
+   differ per type. Real per-frame poses rendered from the uploaded rigged
+   "humanoid" model + its Jogging/Jump Up/Waiting clips (running legs
+   actually bend, the cape actually flows, and a leap over a gap is a real
+   airborne pose) — only the death spin and the windup brace still fake
+   motion by transforming a still frame, since no clip covers those. ---- */
 function drawSoldierBody(e, h){
   if (!e.dead) drawShadow(e.x + e.w / 2, e.y + e.h, e.w * (h > 70 ? 1.1 : 1));
   /* sprite base faces RIGHT; scale(d,1) turns it to the patrol direction */
-  const hurt = e.hurt > 0, d = Math.sign(e.vx) || 1;
+  const hurt = e.hurt > 0, d = Math.sign(e.vx) || 1, tint = hurt ? 'rgba(255,150,130,.6)' : null;
   ctx.save();
   ctx.translate(e.x + e.w / 2, e.y + e.h);
   ctx.scale(d, 1);
-  if (e.dead) ctx.rotate(.9);
-  else {
-    const windup = e.windup > 0 || e.throwWindup > 0, lunge = e.lunge > 0;
-    const march = e.anim * 10;
-    let rot, yOff;
-    if (windup){ rot = -.26; yOff = -2; }                              // rear back to strike/throw
-    else if (lunge){ rot = .2; yOff = -Math.abs(Math.sin(march)) * 3; } // committed forward lunge
-    else if (e.onG === false && e.chasing){ rot = .14; yOff = -6; }    // leaping a gap in pursuit
-    else { rot = Math.sin(march) * .06; yOff = -Math.abs(Math.sin(march)) * 3.4; } // marching hop + sway
-    ctx.translate(0, yOff);
-    ctx.rotate(rot);
+  if (e.dead){
+    ctx.rotate(.9);
+    drawSprite(SPR.soldierIdle[0], h, tint);
+    ctx.restore();
+    return;
   }
-  drawSprite(SPR.soldier, h, hurt ? 'rgba(255,150,130,.6)' : null);
+  const windup = e.windup > 0 || e.throwWindup > 0, lunge = e.lunge > 0;
+  let frame, rot = 0;
+  if (e.onG === false){
+    /* airborne: pick the pose by actual vertical velocity, same trick
+       as the hero's own jump frames */
+    const vFrac = Math.min(1, Math.max(0, (e.vy - SOLDIER_JUMP_VY) / (700 - SOLDIER_JUMP_VY)));
+    frame = SPR.soldierJump[Math.min(SOLDIER_JUMP_FRAMES - 1, Math.floor(vFrac * SOLDIER_JUMP_FRAMES))];
+  } else if (windup){
+    rot = -.18; // brace/rear back before striking or throwing — no dedicated clip, so fake the lean
+    frame = SPR.soldierIdle[Math.floor(e.anim * 4) % SOLDIER_IDLE_FRAMES];
+  } else {
+    if (lunge) rot = .12; // committed forward lunge — still a run cycle, just leaned in
+    const cadence = 9 + Math.min(6, Math.abs(e.vx) / 40);
+    const phase = ((e.anim * cadence / (2 * Math.PI)) % 1 + 1) % 1;
+    frame = SPR.soldierRun[Math.floor(phase * SOLDIER_RUN_FRAMES)];
+  }
+  ctx.rotate(rot);
+  drawSprite(frame, h, tint);
   ctx.restore();
 }
 function drawBandit(e){
