@@ -19,6 +19,10 @@ const HERO_FIRE_ENABLED = false;
 const LEADER_IDLE_FRAMES = 6, LEADER_WALK_FRAMES = 8, LEADER_WINDUP_FRAMES = 6,
       LEADER_SLAM_FRAMES = 5, LEADER_THROW_FRAMES = 6, LEADER_DEATH_FRAMES = 8;
 const SOLDIER_RUN_FRAMES = 10, SOLDIER_JUMP_FRAMES = 8, SOLDIER_IDLE_FRAMES = 8;
+/* display height for the bandit/thrower/shieldman body — close to the
+   hero's own 118, since the old 66 (tuned for the flat static sprite)
+   read as a toy next to him */
+const SOLDIER_H = 108, ELITE_H = 128;
 const SPR = {
   hero: loadSprite('img/hero.png'),
   princess: loadSprite('img/princess.png'),
@@ -269,7 +273,7 @@ function drawSoldierBody(e, h){
   ctx.restore();
 }
 function drawBandit(e){
-  drawSoldierBody(e, 66);
+  drawSoldierBody(e, SOLDIER_H);
   if (e.alert > 0 && !e.dead){
     ctx.fillStyle = 'rgba(255,220,80,' + Math.min(1, e.alert * 2) + ')';
     ctx.font = 'bold 22px Tahoma'; ctx.textAlign = 'center';
@@ -277,7 +281,7 @@ function drawBandit(e){
   }
 }
 function drawThrower(e){
-  drawSoldierBody(e, 66);
+  drawSoldierBody(e, SOLDIER_H);
   if (e.alert > 0 && !e.dead){
     ctx.fillStyle = 'rgba(255,220,80,' + Math.min(1, e.alert * 2) + ')';
     ctx.font = 'bold 22px Tahoma'; ctx.textAlign = 'center';
@@ -370,23 +374,25 @@ function drawSnake(e){
    sprite as the bandit, but carrying a tall steel shield on his facing
    side. The shield flashes bright when a blocked hit clangs off it. ---- */
 function drawShieldman(e){
-  drawSoldierBody(e, 66);
+  drawSoldierBody(e, SOLDIER_H);
   if (!e.dead){
-    const d = Math.sign(e.vx) || 1;
+    /* shield size/anchor scaled up along with the body (both were sized
+       for the old 66px-tall sprite) so it still sits over the chest */
+    const k = SOLDIER_H / 66, d = Math.sign(e.vx) || 1;
     ctx.save();
-    ctx.translate(e.x + e.w / 2 + d * 17, e.y + e.h - 27);
+    ctx.translate(e.x + e.w / 2 + d * 17 * k, e.y + e.h - 27 * k);
     const flash = e.blockT > 0;
     ctx.fillStyle = flash ? '#eef2f6' : '#8a929c';
-    ctx.beginPath(); ctx.ellipse(0, 0, 8, 17, 0, 0, 7); ctx.fill();
-    ctx.strokeStyle = '#4a525c'; ctx.lineWidth = 2.4;
-    ctx.beginPath(); ctx.ellipse(0, 0, 8, 17, 0, 0, 7); ctx.stroke();
-    ctx.fillStyle = '#d4af37'; ctx.beginPath(); ctx.arc(0, 0, 3.2, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, 0, 8 * k, 17 * k, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#4a525c'; ctx.lineWidth = 2.4 * k;
+    ctx.beginPath(); ctx.ellipse(0, 0, 8 * k, 17 * k, 0, 0, 7); ctx.stroke();
+    ctx.fillStyle = '#d4af37'; ctx.beginPath(); ctx.arc(0, 0, 3.2 * k, 0, 7); ctx.fill();
     if (flash){
       ctx.strokeStyle = 'rgba(255,255,255,' + Math.min(1, e.blockT * 4) + ')';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(d * 6, -14); ctx.lineTo(d * 14, -20);
-      ctx.moveTo(d * 8, 0); ctx.lineTo(d * 17, 0);
-      ctx.moveTo(d * 6, 14); ctx.lineTo(d * 14, 20); ctx.stroke();
+      ctx.lineWidth = 2 * k;
+      ctx.beginPath(); ctx.moveTo(d * 6 * k, -14 * k); ctx.lineTo(d * 14 * k, -20 * k);
+      ctx.moveTo(d * 8 * k, 0); ctx.lineTo(d * 17 * k, 0);
+      ctx.moveTo(d * 6 * k, 14 * k); ctx.lineTo(d * 14 * k, 20 * k); ctx.stroke();
     }
     ctx.restore();
   }
@@ -492,7 +498,7 @@ function drawLeopard(e){
    exit — same sprite as the rank-and-file soldier, just bigger, plus a
    nameplate and hp bar ---- */
 function drawElite(e){
-  drawSoldierBody(e, 84);
+  drawSoldierBody(e, ELITE_H);
   if (!e.dead){
     const bw = 56, bx = e.x + e.w / 2 - bw / 2, by = e.y - 26;
     ctx.textAlign = 'center'; ctx.font = 'bold 12px Tahoma';
