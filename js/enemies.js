@@ -52,6 +52,11 @@ function updateEnemies(dt){
       if (e.t === 'bandit' || e.t === 'elite'){
         const dx = P.x - e.x, dy = Math.abs(P.y - e.y);
         const facing = Math.sign(e.vx) || -1;
+        /* a perfectly x-aligned player makes Math.sign(dx) return 0, which
+           would zero e.vx and freeze the chase dead next to him forever
+           (dx never changes again once vx is 0) — fall back to the current
+           facing instead, same guard the leopard's pounce already has */
+        const dxSign = Math.sign(dx) || facing;
         const seeking = !P.dead && dy < 100 && Math.abs(dx) < SOLDIER_CHASE_RANGE;
         if (e.lunge > 0){
           e.lunge -= dt;
@@ -59,22 +64,22 @@ function updateEnemies(dt){
              lunge) — redirect at once instead of either sailing on past him
              or freezing and immediately re-winding up in place, which used
              to stutter right at the crossing point */
-          if (seeking && Math.sign(dx) !== facing){ e.lunge = 0; e.chasing = true; e.vx = Math.abs(e.vx) * Math.sign(dx); }
+          if (seeking && dxSign !== facing){ e.lunge = 0; e.chasing = true; e.vx = Math.abs(e.vx) * dxSign; }
         }
         else if (e.windup > 0){
           e.windup -= dt;
           if (e.windup <= 0){
             e.lunge = 1.1;
-            if (seeking) e.vx = Math.abs(e.vx) * Math.sign(dx); // commit to his *current* side, not the stale one from windup-start
+            if (seeking) e.vx = Math.abs(e.vx) * dxSign; // commit to his *current* side, not the stale one from windup-start
           }
         }
-        else if (seeking && !e.jumpArc && dy < 60 && Math.abs(dx) < 230 && Math.sign(dx) === facing){
+        else if (seeking && !e.jumpArc && dy < 60 && Math.abs(dx) < 230 && dxSign === facing){
           e.windup = .28; e.alert = .8; SFX.hit();
         }
         else if (seeking){
           if (!e.chasing){ e.alert = .5; SFX.hit(); }
           e.chasing = true;
-          e.vx = Math.abs(e.vx) * Math.sign(dx);
+          e.vx = Math.abs(e.vx) * dxSign;
         }
         else e.chasing = false;
       }
@@ -86,22 +91,23 @@ function updateEnemies(dt){
       if (e.t === 'thrower'){
         const dx = P.x - e.x, dy = Math.abs(P.y - e.y);
         const facing = Math.sign(e.vx) || -1;
+        const dxSign = Math.sign(dx) || facing; // see bandit/elite: a dx of exactly 0 must not zero out vx and freeze him
         e.cool = Math.max(0, (e.cool || 0) - dt);
         const seeking = !P.dead && dy < 100 && Math.abs(dx) < SOLDIER_CHASE_RANGE;
         if (e.throwWindup > 0){
           e.throwWindup -= dt;
           if (e.throwWindup <= 0){
-            const throwDir = seeking ? Math.sign(dx) : facing; // aim at his current side, not the stale one from windup-start
+            const throwDir = seeking ? dxSign : facing; // aim at his current side, not the stale one from windup-start
             e.vx = Math.abs(e.vx) * throwDir;
             G.knives.push({ x:e.x + e.w / 2 + throwDir * 14, y:e.y + 20, vx:throwDir * 380, vy:0, t:0, r:9 });
             SFX.fire(); e.cool = 1.5;
           }
-        } else if (seeking && !e.jumpArc && e.cool <= 0 && dy < 60 && Math.abs(dx) < 260 && Math.sign(dx) === facing){
+        } else if (seeking && !e.jumpArc && e.cool <= 0 && dy < 60 && Math.abs(dx) < 260 && dxSign === facing){
           e.throwWindup = .32; e.alert = .8; SFX.hit();
         } else if (seeking){
           if (!e.chasing){ e.alert = .5; SFX.hit(); }
           e.chasing = true;
-          e.vx = Math.abs(e.vx) * Math.sign(dx);
+          e.vx = Math.abs(e.vx) * dxSign;
         } else e.chasing = false;
       }
 
