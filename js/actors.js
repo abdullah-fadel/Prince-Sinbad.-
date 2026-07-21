@@ -262,11 +262,16 @@ function drawSoldierBody(e, h){
   } else if (windup){
     rot = -.18; // brace/rear back before striking or throwing — no dedicated clip, so fake the lean
     frame = SPR.soldierIdle[Math.floor(e.anim * 4) % SOLDIER_IDLE_FRAMES];
-  } else {
+  } else if (lunge || e.moving){
     if (lunge) rot = .12; // committed forward lunge — still a run cycle, just leaned in
     const cadence = 9 + Math.min(6, Math.abs(e.vx) / 40);
     const phase = ((e.anim * cadence / (2 * Math.PI)) % 1 + 1) % 1;
     frame = SPR.soldierRun[Math.floor(phase * SOLDIER_RUN_FRAMES)];
+  } else {
+    /* standing guard: not actually moving this frame (idle until it
+       notices the player, or a shieldman holding position) — a real
+       standing pose instead of the run cycle frozen in place */
+    frame = SPR.soldierIdle[Math.floor(e.anim * 2) % SOLDIER_IDLE_FRAMES];
   }
   ctx.rotate(rot);
   drawSprite(frame, h, tint);
