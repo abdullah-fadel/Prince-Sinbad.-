@@ -148,12 +148,17 @@ function updateEnemies(dt){
       const paused = (e.t === 'scorp' && e.pause > 0) || winding;
       const lunging = (e.t === 'bandit' || e.t === 'elite') && e.lunge > 0;
       const chasingSoldier = (e.t === 'bandit' || e.t === 'elite' || e.t === 'thrower') && e.chasing;
+      const restingGuard = (e.t === 'bandit' || e.t === 'elite' || e.t === 'thrower') && !chasingSoldier;
       const spd = paused ? 0 : lunging ? (e.t === 'elite' ? 210 : 170) :
                   (e.t === 'leopard' && e.pounceT > 0) ? 265 :
                   /* mid-leap over a gap: a fixed bounding speed carries it clear
                      across, rather than the (much slower) ground chase speed */
                   (chasingSoldier && e.jumpArc) ? SOLDIER_JUMP_HSPD :
-                  chasingSoldier ? Math.abs(e.vx) * 1.5 : Math.abs(e.vx);
+                  chasingSoldier ? Math.abs(e.vx) * 1.5 :
+                  /* stand guard at its post instead of pacing until it
+                     actually notices the player */
+                  restingGuard ? 0 : Math.abs(e.vx);
+      e.moving = spd > 0;
       const dir = Math.sign(e.vx) || -1;
       e.x += dir * spd * dt; e.vx = dir * Math.abs(e.vx);
       collideX(e);
