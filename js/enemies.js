@@ -55,11 +55,18 @@ function updateEnemies(dt){
         const seeking = !P.dead && dy < 100 && Math.abs(dx) < SOLDIER_CHASE_RANGE;
         if (e.lunge > 0){
           e.lunge -= dt;
-          if (Math.sign(dx) !== facing) e.lunge = 0; // already sailed past the player — stop the charge, don't overshoot further
+          /* the player crossed to the other side mid-charge (he outran the
+             lunge) — redirect at once instead of either sailing on past him
+             or freezing and immediately re-winding up in place, which used
+             to stutter right at the crossing point */
+          if (seeking && Math.sign(dx) !== facing){ e.lunge = 0; e.chasing = true; e.vx = Math.abs(e.vx) * Math.sign(dx); }
         }
         else if (e.windup > 0){
           e.windup -= dt;
-          if (e.windup <= 0){ e.lunge = 1.1; }
+          if (e.windup <= 0){
+            e.lunge = 1.1;
+            if (seeking) e.vx = Math.abs(e.vx) * Math.sign(dx); // commit to his *current* side, not the stale one from windup-start
+          }
         }
         else if (seeking && !e.jumpArc && dy < 60 && Math.abs(dx) < 230 && Math.sign(dx) === facing){
           e.windup = .28; e.alert = .8; SFX.hit();
@@ -84,7 +91,9 @@ function updateEnemies(dt){
         if (e.throwWindup > 0){
           e.throwWindup -= dt;
           if (e.throwWindup <= 0){
-            G.knives.push({ x:e.x + e.w / 2 + facing * 14, y:e.y + 20, vx:facing * 380, vy:0, t:0, r:9 });
+            const throwDir = seeking ? Math.sign(dx) : facing; // aim at his current side, not the stale one from windup-start
+            e.vx = Math.abs(e.vx) * throwDir;
+            G.knives.push({ x:e.x + e.w / 2 + throwDir * 14, y:e.y + 20, vx:throwDir * 380, vy:0, t:0, r:9 });
             SFX.fire(); e.cool = 1.5;
           }
         } else if (seeking && !e.jumpArc && e.cool <= 0 && dy < 60 && Math.abs(dx) < 260 && Math.sign(dx) === facing){
