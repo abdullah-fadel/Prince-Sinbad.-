@@ -237,6 +237,7 @@ function drawSoldierBody(e, h){
     let rot, yOff;
     if (windup){ rot = -.26; yOff = -2; }                              // rear back to strike/throw
     else if (lunge){ rot = .2; yOff = -Math.abs(Math.sin(march)) * 3; } // committed forward lunge
+    else if (e.onG === false && e.chasing){ rot = .14; yOff = -6; }    // leaping a gap in pursuit
     else { rot = Math.sin(march) * .06; yOff = -Math.abs(Math.sin(march)) * 3.4; } // marching hop + sway
     ctx.translate(0, yOff);
     ctx.rotate(rot);

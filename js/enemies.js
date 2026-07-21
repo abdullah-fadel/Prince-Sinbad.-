@@ -12,6 +12,25 @@ function edgeAhead(e){
   return !solid(tileAt(c, r)) && tileAt(c, r) !== '=';
 }
 
+/* soldier chase tuning (bandit/elite/thrower): how far they'll notice and
+   pursue the player, and how wide a floor gap they'll leap rather than
+   turn back at — wider chasms still stop them like any other patroller */
+const SOLDIER_CHASE_RANGE = 320, SOLDIER_JUMP_GAP_TILES = 3, SOLDIER_JUMP_VY = -600, SOLDIER_JUMP_HSPD = 300;
+
+/* counts empty floor tiles ahead of e (in its facing direction) until solid
+   ground resumes, capped just past the jumpable width */
+function gapWidth(e){
+  const dir = Math.sign(e.vx) || 1;
+  const r = Math.floor((e.y + e.h + 6) / TILE);
+  let c = Math.floor((dir > 0 ? e.x + e.w : e.x) / TILE) + dir, n = 0;
+  while (n <= SOLDIER_JUMP_GAP_TILES){
+    const ch = tileAt(c, r);
+    if (solid(ch) || ch === '=') return n;
+    c += dir; n++;
+  }
+  return n;
+}
+
 function updateEnemies(dt){
   for (let i = G.ents.length - 1; i >= 0; i--){
     const e = G.ents[i];
@@ -27,39 +46,51 @@ function updateEnemies(dt){
       e.alert = Math.max(0, (e.alert || 0) - dt);
       e.hitWall = false;
 
-      /* bandit/elite vision: spot the player, flash "!", wind up, then lunge */
+      /* bandit/elite vision: spot the player, flash "!", wind up, then lunge —
+         and outside melee range, actively turn and close the distance (with
+         a small hop over narrow gaps) instead of just patrolling blindly */
       if (e.t === 'bandit' || e.t === 'elite'){
         const dx = P.x - e.x, dy = Math.abs(P.y - e.y);
         const facing = Math.sign(e.vx) || -1;
+        const seeking = !P.dead && dy < 100 && Math.abs(dx) < SOLDIER_CHASE_RANGE;
         if (e.lunge > 0) e.lunge -= dt;
         else if (e.windup > 0){
           e.windup -= dt;
           if (e.windup <= 0){ e.lunge = 1.1; }
         }
-        else if (!P.dead && dy < 60 && Math.abs(dx) < 230 && Math.sign(dx) === facing){
+        else if (seeking && !e.jumpArc && dy < 60 && Math.abs(dx) < 230 && Math.sign(dx) === facing){
           e.windup = .28; e.alert = .8; SFX.hit();
         }
-        /* player sneaking close behind: turn around */
-        else if (!P.dead && dy < 50 && Math.abs(dx) < 90 && Math.sign(dx) !== facing){
-          e.vx = -e.vx;
+        else if (seeking){
+          if (!e.chasing){ e.alert = .5; SFX.hit(); }
+          e.chasing = true;
+          e.vx = Math.abs(e.vx) * Math.sign(dx);
         }
+        else e.chasing = false;
       }
 
       /* thrower: same vision envelope as bandit, but a ranged knife toss
-         (telegraphed by throwWindup) instead of a melee lunge */
+         (telegraphed by throwWindup) instead of a melee lunge; also chases
+         to get back into range once its cooldown or the player's retreat
+         breaks line of sight */
       if (e.t === 'thrower'){
         const dx = P.x - e.x, dy = Math.abs(P.y - e.y);
         const facing = Math.sign(e.vx) || -1;
         e.cool = Math.max(0, (e.cool || 0) - dt);
+        const seeking = !P.dead && dy < 100 && Math.abs(dx) < SOLDIER_CHASE_RANGE;
         if (e.throwWindup > 0){
           e.throwWindup -= dt;
           if (e.throwWindup <= 0){
             G.knives.push({ x:e.x + e.w / 2 + facing * 14, y:e.y + 20, vx:facing * 380, vy:0, t:0, r:9 });
             SFX.fire(); e.cool = 1.5;
           }
-        } else if (e.cool <= 0 && !P.dead && dy < 60 && Math.abs(dx) < 260 && Math.sign(dx) === facing){
+        } else if (seeking && !e.jumpArc && e.cool <= 0 && dy < 60 && Math.abs(dx) < 260 && Math.sign(dx) === facing){
           e.throwWindup = .32; e.alert = .8; SFX.hit();
-        }
+        } else if (seeking){
+          if (!e.chasing){ e.alert = .5; SFX.hit(); }
+          e.chasing = true;
+          e.vx = Math.abs(e.vx) * Math.sign(dx);
+        } else e.chasing = false;
       }
 
       /* scorpions pause now and then — less metronomic patrols */
@@ -113,13 +144,22 @@ function updateEnemies(dt){
                       (e.t === 'leopard' && e.pounceWind > 0);
       const paused = (e.t === 'scorp' && e.pause > 0) || winding;
       const lunging = (e.t === 'bandit' || e.t === 'elite') && e.lunge > 0;
+      const chasingSoldier = (e.t === 'bandit' || e.t === 'elite' || e.t === 'thrower') && e.chasing;
       const spd = paused ? 0 : lunging ? (e.t === 'elite' ? 210 : 170) :
-                  (e.t === 'leopard' && e.pounceT > 0) ? 265 : Math.abs(e.vx);
+                  (e.t === 'leopard' && e.pounceT > 0) ? 265 :
+                  /* mid-leap over a gap: a fixed bounding speed carries it clear
+                     across, rather than the (much slower) ground chase speed */
+                  (chasingSoldier && e.jumpArc) ? SOLDIER_JUMP_HSPD :
+                  chasingSoldier ? Math.abs(e.vx) * 1.5 : Math.abs(e.vx);
       const dir = Math.sign(e.vx) || -1;
       e.x += dir * spd * dt; e.vx = dir * Math.abs(e.vx);
       collideX(e);
       e.vy = (e.vy || 0) + 2200 * dt; e.y += e.vy * dt; collideY(e, false);
-      if (e.hitWall || (e.onG && spd > 0 && edgeAhead(e))){ e.vx = -e.vx; e.lunge = 0; e.windup = 0; }
+      if (e.onG) e.jumpArc = false;
+      if (e.hitWall || (e.onG && spd > 0 && edgeAhead(e))){
+        if (!e.hitWall && chasingSoldier && e.onG && gapWidth(e) <= SOLDIER_JUMP_GAP_TILES){ e.vy = SOLDIER_JUMP_VY; e.jumpArc = true; }
+        else { e.vx = -e.vx; e.lunge = 0; e.windup = 0; }
+      }
 
       /* contact with player */
       if (!P.dead && aabb(e, P)){
