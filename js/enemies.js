@@ -174,14 +174,24 @@ function updateEnemies(dt){
                      actually notices the player */
                   restingGuard ? 0 : Math.abs(e.vx);
       e.moving = spd > 0;
-      const dir = Math.sign(e.vx) || -1;
-      e.x += dir * spd * dt; e.vx = dir * Math.abs(e.vx);
+      /* dir/mag together are the single source of truth for this enemy's
+         facing: drawSoldierBody's ctx.scale(d,1) flip, this movement step,
+         and the edge/gap checks below all read it back off e.vx's sign.
+         collideX zeroes e.vx the instant it hits a wall (to kill the
+         wall-ward speed), which used to make "e.vx = -e.vx" a no-op right
+         when a bounce-turn needed it most — the enemy froze pinned at the
+         wall (facing whatever ctx.scale(d,1)'s ||1 fallback picked) instead
+         of turning around, reading as "stuck sinking into the wall". Keep
+         dir/mag from before collideX runs so the turn always has a real
+         direction and speed to reverse into. */
+      const dir = Math.sign(e.vx) || -1, mag = Math.abs(e.vx);
+      e.x += dir * spd * dt; e.vx = dir * mag;
       collideX(e);
       e.vy = (e.vy || 0) + 2200 * dt; e.y += e.vy * dt; collideY(e, false);
       if (e.onG) e.jumpArc = false;
       if (e.hitWall || (e.onG && spd > 0 && edgeAhead(e))){
         if (!e.hitWall && chasingSoldier && e.onG && gapWidth(e) <= SOLDIER_JUMP_GAP_TILES){ e.vy = SOLDIER_JUMP_VY; e.jumpArc = true; }
-        else { e.vx = -e.vx; e.lunge = 0; e.windup = 0; }
+        else { e.vx = -dir * mag; e.lunge = 0; e.windup = 0; }
       }
 
       /* contact with player */
