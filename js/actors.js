@@ -256,9 +256,15 @@ function drawSoldierBody(e, h){
   let frame, rot = 0;
   if (e.onG === false){
     /* airborne: pick the pose by actual vertical velocity, same trick
-       as the hero's own jump frames */
+       as the hero's own jump frames. Only the clip's first half (launch
+       through the tucked mid-fall crouch) reads as leaning toward the
+       travel direction — soldierJump[4] swings an arm out behind itself,
+       and [5]-[7] flail into a full head-first tumble, so hold the last
+       clean crouch pose (index 3) instead of playing into those once
+       the gap-hop is past its apex. */
     const vFrac = Math.min(1, Math.max(0, (e.vy - SOLDIER_JUMP_VY) / (700 - SOLDIER_JUMP_VY)));
-    frame = SPR.soldierJump[Math.min(SOLDIER_JUMP_FRAMES - 1, Math.floor(vFrac * SOLDIER_JUMP_FRAMES))];
+    const usableJumpFrames = 4;
+    frame = SPR.soldierJump[Math.min(usableJumpFrames - 1, Math.floor(vFrac * SOLDIER_JUMP_FRAMES))];
   } else if (windup){
     rot = -.18; // brace/rear back before striking or throwing — no dedicated clip, so fake the lean
     frame = SPR.soldierIdle[Math.floor(e.anim * 4) % SOLDIER_IDLE_FRAMES];
