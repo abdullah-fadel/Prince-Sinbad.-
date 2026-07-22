@@ -275,6 +275,38 @@ function drawSoldierBody(e, h){
   }
   ctx.rotate(rot);
   drawSprite(frame, h, tint);
+  if ((e.t === 'bandit' || e.t === 'elite') && (windup || lunge)) drawSoldierSword(e, h, lunge);
+  ctx.restore();
+}
+/* ---- bandit/elite melee weapon: no swing clip was baked (only run/jump/
+   idle), so the actual strike is a procedural scimitar drawn over the body
+   — raised back through the windup brace, then slashing down and forward
+   across the lunge so the hit reads as a real sword blow instead of just
+   a body charge. Drawn inside drawSoldierBody's own translate/scale(d,1)
+   transform so it flips and leans with the body for free. ---- */
+function drawSoldierSword(e, h, lunge){
+  const k = h / SOLDIER_H;
+  /* windup: raised back overhead. lunge: sweeps forward/down over its
+     1.1s duration into a forward thrust, with a brief slash arc at the
+     midpoint of the swing for impact feedback. */
+  const swing = lunge ? -1.5 + Math.min(1, Math.max(0, 1 - e.lunge / 1.1)) * 1.9 : -1.5;
+  const hx = 15 * k, hy = -h * .48;
+  ctx.save();
+  ctx.translate(hx, hy);
+  ctx.rotate(swing);
+  ctx.strokeStyle = '#5c4326'; ctx.lineWidth = 4.4 * k; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-7 * k, 3 * k); ctx.lineTo(0, 0); ctx.stroke();
+  ctx.strokeStyle = '#c9cdd2'; ctx.lineWidth = 3.6 * k; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(28 * k, -8 * k, 45 * k, 8 * k); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.2 * k;
+  ctx.beginPath(); ctx.moveTo(4 * k, -2 * k); ctx.quadraticCurveTo(28 * k, -9 * k, 43 * k, 7 * k); ctx.stroke();
+  if (lunge){
+    const prog = Math.min(1, Math.max(0, 1 - e.lunge / 1.1));
+    if (prog > .2 && prog < .7){
+      ctx.strokeStyle = 'rgba(255,255,255,' + (.6 * (1 - Math.abs(prog - .45) / .25)) + ')';
+      ctx.lineWidth = 2.2 * k; ctx.beginPath(); ctx.arc(0, 0, 42 * k, swing - .7, swing + .15); ctx.stroke();
+    }
+  }
   ctx.restore();
 }
 function drawBandit(e){
